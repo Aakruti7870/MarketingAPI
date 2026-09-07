@@ -1,0 +1,52 @@
+name: Production Readiness
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - "deploy/**"
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install --no-audit --no-fund
+      - run: npm run build
+        env:
+          REACT_APP_BACKEND_URL: ""
+
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r backend/requirements.txt
+      - name: Compile and import production app
+        env:
+          MONGO_URL: mongodb://127.0.0.1:27017
+          DB_NAME: marketingapi_ci
+          JWT_SECRET: ci-only-secret
+          SEED_DEMO_DATA: "false"
+        run: |
+          export VAULT_KEY="$(python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')"
+          python -m compileall -q backend
+          PYTHONPATH=backend python -c "import production; assert production.app"
+
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t marketingapi:ci .
