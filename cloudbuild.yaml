@@ -3,6 +3,7 @@ substitutions:
   _SERVICE: marketingapi
   _AR_REPO: marketingapi
   _SCHEDULER_JOB: marketingapi-scheduler
+  _PUBLIC_ORIGIN: https://gold-etechapp.com
 
 steps:
   - id: ensure-artifact-registry
@@ -49,7 +50,7 @@ steps:
       - --concurrency=80
       - --min=0
       - --max=20
-      - --set-env-vars=APP_ENV=production,DB_NAME=marketingapi,ENABLE_SIMULATION=false,ENABLE_IN_PROCESS_AUTOPILOT=false,OPENAI_MODEL=gpt-5,OPENAI_IMAGE_MODEL=gpt-image-1.5
+      - --set-env-vars=APP_ENV=production,DB_NAME=marketingapi,ENABLE_SIMULATION=false,ENABLE_IN_PROCESS_AUTOPILOT=false,OPENAI_MODEL=gpt-5,OPENAI_IMAGE_MODEL=gpt-image-1.5,ALLOWED_ORIGINS=${_PUBLIC_ORIGIN}
       - --set-secrets=MONGO_URL=MARKETINGAPI_MONGO_URL:latest,JWT_SECRET=MARKETINGAPI_JWT_SECRET:latest,VAULT_KEY=MARKETINGAPI_VAULT_KEY:latest,OPENAI_API_KEY=MARKETINGAPI_OPENAI_API_KEY:latest,META_WEBHOOK_VERIFY_TOKEN=MARKETINGAPI_META_WEBHOOK_VERIFY_TOKEN:latest,CRON_SECRET=MARKETINGAPI_CRON_SECRET:latest
 
   - id: configure-scheduler

@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Layout from "./components/Layout";
+import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
@@ -26,8 +27,8 @@ function Protected({ children }) {
   const { user } = useAuth();
   if (user === null)
     return (
-      <div className="h-screen flex items-center justify-center bg-slate-50">
-        <div className="w-10 h-10 rounded-xl gold-gradient animate-pulse" />
+      <div className="h-screen flex items-center justify-center bg-violet-50">
+        <div className="w-10 h-10 rounded-xl brand-gradient animate-pulse shadow-brand" />
       </div>
     );
   if (!user) return <Navigate to="/login" replace />;
@@ -46,6 +47,7 @@ export default function App() {
       <BrowserRouter>
         <Toaster position="top-right" richColors />
         <Routes>
+          <Route path="/" element={<Landing />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/login" element={<GuestOnly><Auth /></GuestOnly>} />
           <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
@@ -64,7 +66,7 @@ export default function App() {
           <Route path="/team" element={<Protected><Team /></Protected>} />
           <Route path="/vault" element={<Protected><Vault /></Protected>} />
           <Route path="/workspace" element={<Protected><Workspace /></Protected>} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>
     </AuthProvider>
