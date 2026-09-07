@@ -1,103 +1,195 @@
 # MarketingAPI Production Deployment
 
-MarketingAPI is configured to deploy as a **single web service**. The React frontend is built inside the Docker image and served by FastAPI, while all backend routes remain under `/api`.
-
-This avoids maintaining separate frontend and backend domains.
-
-## Production architecture
+## Target architecture
 
 ```text
-Custom domain
-   |
-   v
-MarketingAPI Docker service
-   |-- React SPA                  /
-   |-- FastAPI                    /api/*
-   |-- Health check               /api/health
-   |
-   +--> MongoDB                   MONGO_URL
+Custom Domain
+      |
+      v
+Firebase Hosting
+  |         |
+  | /*      | /api/**
+  v         v
+React SPA   Cloud Run: marketingapi
+                |
+                +--> MongoDB
+                +--> OpenAI API
+                +--> Meta WhatsApp Cloud API
+                +--> Cloud Scheduler
+                +--> Secret Manager
 ```
 
-## Required production input
+The custom domain terminates at Firebase Hosting. The browser uses relative `/api/...` URLs, and Firebase rewrites those requests to the `marketingapi` Cloud Run service in `asia-south1`.
 
-Only one external runtime value is required by the Render Blueprint:
+Production simulation and demo seeding are disabled.
 
-- `MONGO_URL` — a MongoDB connection string for a persistent MongoDB deployment.
+## 1. Google Cloud / Firebase project
 
-The Blueprint automatically creates a stable `JWT_SECRET`. The production entrypoint derives a Fernet-compatible vault encryption key from that secret if `VAULT_KEY` is not explicitly provided.
+Use one Google Cloud project that also has Firebase enabled. Do not commit `.firebaserc`; deployments explicitly use the active Google Cloud project ID.
 
-**Do not rotate `JWT_SECRET` after storing encrypted credentials unless you have planned a vault-key migration.** Existing login tokens will also become invalid after a JWT secret rotation.
+Enable the required services:
 
-## Deploy on Render
+```bash
+gcloud services enable \
+  run.googleapis.com \
+  cloudbuild.googleapis.com \
+  secretmanager.googleapis.com \
+  cloudscheduler.googleapis.com \
+  firebasehosting.googleapis.com
+```
 
-1. Merge the production-readiness PR into `main`.
-2. In Render, create a new **Blueprint** from `Aakruti7870/MarketingAPI`.
-3. Render reads `render.yaml` and builds the root `Dockerfile`.
-4. When prompted, enter `MONGO_URL`.
-5. Start the deployment.
-6. Confirm the health check returns HTTP 200 at `/api/health`.
-7. Open the generated Render URL. The React frontend and FastAPI backend are served from the same origin.
-8. Register the first real workspace/owner from the application. Production demo seeding is disabled.
-9. Add the custom domain in Render and apply the DNS records Render provides.
+Initialize Firebase Hosting for the project if Hosting has not been enabled before.
 
-No frontend API URL change is required when the frontend and backend use the same domain.
+## 2. Required Secret Manager secrets
 
-## Optional production environment variables
+The Cloud Build pipeline expects these secrets to exist:
 
-- `DB_NAME` — defaults to `marketingapi` in the Render Blueprint.
-- `VAULT_KEY` — optional dedicated Fernet key. If omitted, production derives one from `JWT_SECRET`.
-- `ALLOWED_ORIGINS` — optional comma-separated CORS origins for split-domain or external browser clients.
-- `EMERGENT_LLM_KEY` — optional AI-provider key used by the existing AI integration.
-- `SEED_DEMO_DATA` — must remain `false` in production unless a temporary demo environment is intentionally required.
+- `MARKETINGAPI_MONGO_URL`
+- `MARKETINGAPI_JWT_SECRET`
+- `MARKETINGAPI_OPENAI_API_KEY`
+- `MARKETINGAPI_META_WEBHOOK_VERIFY_TOKEN`
+- `MARKETINGAPI_CRON_SECRET`
 
-Provider-specific credentials such as WhatsApp/Meta, email, AI, and webhook secrets should be added through the platform's credential workflow or secure deployment environment variables. Never commit them to Git.
+Create them without putting values in shell history where possible. Example pattern:
 
-## Local full-stack run
+```bash
+printf '%s' 'YOUR_VALUE' | gcloud secrets create MARKETINGAPI_JWT_SECRET --data-file=-
+```
 
-The repository also includes Docker Compose for local testing.
+For an existing secret, add a new version instead:
 
-Create `.env` from `.env.example` and set a random `JWT_SECRET`, then run:
+```bash
+printf '%s' 'NEW_VALUE' | gcloud secrets versions add MARKETINGAPI_JWT_SECRET --data-file=-
+```
+
+`JWT_SECRET` must remain stable after launch because it signs sessions and is also used to derive the vault encryption key when a dedicated `VAULT_KEY` is not configured.
+
+## 3. IAM prerequisites
+
+The Cloud Build service account needs only the permissions required to:
+
+- build/push container images;
+- deploy Cloud Run;
+- deploy Firebase Hosting;
+- create/update the Cloud Scheduler job;
+- access `MARKETINGAPI_CRON_SECRET` during the scheduler configuration step;
+- act as the Cloud Run runtime service account.
+
+The Cloud Run runtime service account needs Secret Manager access to the five runtime secrets above.
+
+Grant these roles in Google Cloud IAM according to your organization policy rather than committing service-account keys to this repository.
+
+## 4. Deploy end to end
+
+From the repository root:
+
+```bash
+gcloud builds submit --config cloudbuild.yaml .
+```
+
+The build performs this sequence:
+
+1. Build the backend Docker image.
+2. Push the image.
+3. Deploy `marketingapi` to Cloud Run in `asia-south1`.
+4. Configure/update the Cloud Scheduler job (every 5 minutes).
+5. Build the React production bundle with same-origin API calls.
+6. Deploy Firebase Hosting.
+
+The deploy is successful only after Cloud Run and Firebase steps complete.
+
+## 5. Verify before adding the domain
+
+Open the Firebase Hosting generated URL and verify:
+
+```text
+/api/health
+/api/version
+```
+
+`/api/health` must return HTTP 200 and report `database: ok`.
+
+Then register the first real workspace and verify:
+
+- login / session persistence;
+- lead creation;
+- Consent Guard;
+- Campaign Studio draft -> approval -> send;
+- WhatsApp connection (when Meta credentials are available);
+- AI generation;
+- Workspace & Usage page;
+- Developer API key creation;
+- scheduled follow-ups.
+
+## 6. Add the custom domain
+
+In Firebase Console:
+
+```text
+Hosting -> Add custom domain
+```
+
+Enter the final domain and apply the DNS records Firebase provides. HTTPS is managed by Firebase Hosting.
+
+Do **not** point the public custom domain directly to Cloud Run. The intended flow is:
+
+```text
+Domain -> Firebase Hosting -> Cloud Run
+```
+
+## 7. Meta WhatsApp webhook
+
+Once the custom domain is active, use:
+
+```text
+https://YOUR_DOMAIN/api/webhooks/meta/whatsapp
+```
+
+as the Meta callback URL and use the value stored in `MARKETINGAPI_META_WEBHOOK_VERIFY_TOKEN` as the verification token.
+
+Workspace access tokens/app secrets are stored encrypted through the application and are never returned in plaintext.
+
+## 8. Local end-to-end development
+
+Copy the environment template:
+
+```bash
+cp .env.example .env
+```
+
+Then:
 
 ```bash
 docker compose up --build
 ```
 
-Open:
+Local URLs:
 
 ```text
-http://localhost:8080
+Frontend: http://localhost:3000
+Backend:  http://localhost:8000
+MongoDB:  mongodb://localhost:27017
 ```
 
-MongoDB runs locally in the `mongo` container and persists data in the `marketingapi_mongo` Docker volume.
+Only local Docker Compose enables provider simulation and the in-process automation loop. Production does not.
 
-## Split local development
+## 9. CI gates
 
-Backend:
+Every PR runs:
 
-```bash
-cd backend
-cp .env.example .env
-# Fill MONGO_URL, JWT_SECRET and a valid VAULT_KEY.
-pip install -r requirements.txt
-uvicorn server:app --reload --port 8000
-```
+- React production build;
+- Python compile + Cloud Run production import;
+- real MongoDB + FastAPI HTTP E2E tests;
+- backend Docker build;
+- Firebase JSON and Cloud Build YAML validation.
 
-Frontend:
+Do not deploy a revision with a failed gate.
 
-```bash
-cd frontend
-cp .env.example .env
-# For split local development set REACT_APP_BACKEND_URL=http://localhost:8000
-npm install
-npm start
-```
+## Security notes
 
-## Production validation
-
-GitHub Actions runs three readiness checks:
-
-- React production build
-- Python compile + production app import
-- Full Docker image build
-
-Do not merge deployment changes while any of these checks are failing.
+- Never commit API keys, service-account JSON, MongoDB URLs, JWT secrets, webhook tokens or `.env` files.
+- Do not rotate `JWT_SECRET` without a vault migration plan.
+- Simulation must remain disabled in production.
+- Demo seeding must remain disabled in production.
+- Cloud Run is public because Firebase Hosting needs to proxy `/api/**`; application authentication/authorization protects private API routes.
+- The scheduler endpoint is additionally protected with `CRON_SECRET` and atomic database claims prevent duplicate campaign/follow-up execution across Cloud Run instances.
