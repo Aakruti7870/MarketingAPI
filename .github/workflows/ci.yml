@@ -84,7 +84,7 @@ jobs:
       - name: Run HTTP E2E suite
         env:
           TEST_BACKEND_URL: http://127.0.0.1:8000
-        run: pytest -q backend/tests/test_e2e.py
+        run: pytest -q backend/tests
       - name: Show API log
         if: always()
         run: cat /tmp/marketingapi.log || true
@@ -109,7 +109,8 @@ jobs:
           python - <<'PY'
           import pathlib, yaml
           data = yaml.safe_load(pathlib.Path('cloudbuild.yaml').read_text())
-          assert isinstance(data.get('steps'), list) and len(data['steps']) >= 6
+          assert isinstance(data.get('steps'), list) and len(data['steps']) >= 7
+          assert any(step.get('id') == 'ensure-artifact-registry' for step in data['steps'])
           assert any(step.get('id') == 'deploy-cloud-run' for step in data['steps'])
           assert any(step.get('id') == 'deploy-firebase-hosting' for step in data['steps'])
           PY
