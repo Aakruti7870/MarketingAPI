@@ -6,6 +6,7 @@ import base64
 import hashlib
 import os
 
+from fastapi import Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
@@ -21,9 +22,31 @@ if not os.environ.get("VAULT_KEY"):
 
 import core
 import saas
+import secure_vault
 import server
+import studio
 
 app = server.app
+
+
+def _remove_route(path: str, methods: set[str]):
+    """Remove an explicitly superseded legacy route before adding its safe replacement."""
+    app.router.routes = [
+        route for route in app.router.routes
+        if not (
+            getattr(route, "path", None) == path
+            and bool(set(getattr(route, "methods", set()) or set()) & methods)
+        )
+    ]
+
+
+# Replace routes that had prototype-only or unsafe production semantics.
+_remove_route("/api/vault", {"GET", "POST"})
+_remove_route("/api/vault/{cid}", {"DELETE"})
+_remove_route("/api/dashboard", {"GET"})
+_remove_route("/api/campaigns", {"POST"})
+
+app.include_router(secure_vault.router)
 app.include_router(saas.router)
 
 
@@ -57,10 +80,41 @@ for middleware in app.user_middleware:
 app.middleware_stack = None
 
 
+@app.get("/api/dashboard")
+async def production_dashboard(user: dict = Depends(server.get_current_user)):
+    """Use the established dashboard calculations but remove fabricated AI/latency values."""
+    payload = await server.dashboard(user)
+    payload = dict(payload)
+    kpis = dict(payload.get("kpis") or {})
+    kpis.pop("ai_cost", None)
+    kpis.pop("ai_budget", None)
+    kpis.pop("avg_response", None)
+    payload["kpis"] = kpis
+    return payload
+
+
+@app.post("/api/campaigns")
+async def production_campaign_create(
+    body: server.CampaignIn,
+    user: dict = Depends(server.get_current_user),
+):
+    """Keep the legacy create URL, but create a draft instead of fake-sending it."""
+    studio_body = studio.CampaignIn(
+        name=body.name,
+        channel=body.channel,
+        segment=body.segment,
+        template_id=body.template_id,
+        message=body.message or "",
+        schedule_at=body.scheduled_at,
+    )
+    return await studio.create(studio_body, user)
+
+
 @app.on_event("startup")
 async def production_indexes():
-    """Indexes needed for tenant isolation, idempotency and multi-instance limits."""
+    """Indexes and one-way safety migration needed by the production service."""
     try:
+        await secure_vault.migrate_legacy_plaintext_metadata()
         await core.db.whatsapp_connections.create_index("phone_number_id", unique=True, sparse=True)
         await core.db.followups.create_index(
             [("workspace_id", 1), ("followup_key", 1)], unique=True, sparse=True
@@ -71,7 +125,7 @@ async def production_indexes():
         await core.db.api_usage.create_index([("workspace_id", 1), ("at", -1)])
         await core.db.webhook_events.create_index([("workspace_id", 1), ("created_at", -1)])
     except Exception as exc:
-        print(f"production index error: {type(exc).__name__}")
+        print(f"production startup hardening error: {type(exc).__name__}")
 
 
 @app.get("/api/health", include_in_schema=False)
