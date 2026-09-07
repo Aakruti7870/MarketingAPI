@@ -1,0 +1,106 @@
+substitutions:
+  _REGION: asia-south1
+  _SERVICE: marketingapi
+  _SCHEDULER_JOB: marketingapi-scheduler
+
+steps:
+  - id: backend-image
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - gcr.io/$PROJECT_ID/${_SERVICE}:$COMMIT_SHA
+      - .
+
+  - id: push-backend
+    name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - gcr.io/$PROJECT_ID/${_SERVICE}:$COMMIT_SHA
+
+  - id: deploy-cloud-run
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=gcr.io/$PROJECT_ID/${_SERVICE}:$COMMIT_SHA
+      - --region=${_REGION}
+      - --platform=managed
+      - --allow-unauthenticated
+      - --port=8080
+      - --cpu=1
+      - --memory=1Gi
+      - --concurrency=80
+      - --min=0
+      - --max=20
+      - --set-env-vars=APP_ENV=production,DB_NAME=marketingapi,ENABLE_SIMULATION=false,ENABLE_IN_PROCESS_AUTOPILOT=false,OPENAI_MODEL=gpt-5,OPENAI_IMAGE_MODEL=gpt-image-1.5
+      - --set-secrets=MONGO_URL=MARKETINGAPI_MONGO_URL:latest,JWT_SECRET=MARKETINGAPI_JWT_SECRET:latest,OPENAI_API_KEY=MARKETINGAPI_OPENAI_API_KEY:latest,META_WEBHOOK_VERIFY_TOKEN=MARKETINGAPI_META_WEBHOOK_VERIFY_TOKEN:latest,CRON_SECRET=MARKETINGAPI_CRON_SECRET:latest
+
+  - id: configure-scheduler
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    secretEnv:
+      - CRON_SECRET
+    args:
+      - -ceu
+      - |
+        SERVICE_URL="$(gcloud run services describe '${_SERVICE}' --region '${_REGION}' --format='value(status.url)')"
+        if gcloud scheduler jobs describe '${_SCHEDULER_JOB}' --location '${_REGION}' >/dev/null 2>&1; then
+          gcloud scheduler jobs update http '${_SCHEDULER_JOB}' \
+            --location '${_REGION}' \
+            --schedule '*/5 * * * *' \
+            --uri "$${SERVICE_URL}/api/autopilot/internal/run" \
+            --http-method POST \
+            --headers "X-Cron-Secret=$$CRON_SECRET"
+        else
+          gcloud scheduler jobs create http '${_SCHEDULER_JOB}' \
+            --location '${_REGION}' \
+            --schedule '*/5 * * * *' \
+            --uri "$${SERVICE_URL}/api/autopilot/internal/run" \
+            --http-method POST \
+            --headers "X-Cron-Secret=$$CRON_SECRET"
+        fi
+
+  - id: frontend-install
+    name: node:20-alpine
+    dir: frontend
+    entrypoint: npm
+    args:
+      - install
+      - --no-audit
+      - --no-fund
+
+  - id: frontend-build
+    name: node:20-alpine
+    dir: frontend
+    entrypoint: npm
+    env:
+      - REACT_APP_BACKEND_URL=
+    args:
+      - run
+      - build
+
+  - id: deploy-firebase-hosting
+    name: us-docker.pkg.dev/firebase-cli/us/firebase
+    args:
+      - deploy
+      - --project
+      - $PROJECT_ID
+      - --only
+      - hosting
+      - --non-interactive
+
+availableSecrets:
+  secretManager:
+    - versionName: projects/$PROJECT_ID/secrets/MARKETINGAPI_CRON_SECRET/versions/latest
+      env: CRON_SECRET
+
+images:
+  - gcr.io/$PROJECT_ID/${_SERVICE}:$COMMIT_SHA
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: 1800s
