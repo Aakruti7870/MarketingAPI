@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const BACKEND = process.env.REACT_APP_BACKEND_URL;
+// In production the React app and FastAPI are served from the same origin.
+// REACT_APP_BACKEND_URL is only needed when the frontend is hosted separately.
+const BACKEND = (process.env.REACT_APP_BACKEND_URL || "").replace(/\/$/, "");
 export const API = `${BACKEND}/api`;
 export const BACKEND_URL = BACKEND;
 
