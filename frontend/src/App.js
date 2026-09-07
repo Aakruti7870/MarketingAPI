@@ -20,6 +20,7 @@ import Analytics from "./pages/Analytics";
 import Developer from "./pages/Developer";
 import WhatsApp from "./pages/WhatsApp";
 import Workspace from "./pages/Workspace";
+import Pricing from "./pages/Pricing";
 
 function Protected({ children }) {
   const { user } = useAuth();
@@ -45,6 +46,7 @@ export default function App() {
       <BrowserRouter>
         <Toaster position="top-right" richColors />
         <Routes>
+          <Route path="/pricing" element={<Pricing />} />
           <Route path="/login" element={<GuestOnly><Auth /></GuestOnly>} />
           <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
           <Route path="/leads" element={<Protected><Leads /></Protected>} />
