@@ -53,7 +53,10 @@ def test_vault_never_returns_plaintext_and_saas_overview_is_real():
     overview = requests.get(f"{API}/saas/overview", headers=auth(token), timeout=20)
     assert overview.status_code == 200, overview.text
     data = overview.json()
-    assert data["workspace"]["plan"] in {"Starter", "Growth", "Scale", "Enterprise"}
+    assert data["workspace"]["plan"] in {"Free", "Pro"}
+    assert data["workspace"]["plan"] == "Free"
+    assert data["wallet"]["coin_balance"] == 100
+    assert data["wallet"]["coin_period"] == "lifetime"
     assert isinstance(data["usage"]["team_members"], int)
     assert data["providers"]["scheduler"]["configured"] is True
 
