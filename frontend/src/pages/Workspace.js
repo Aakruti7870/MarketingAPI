@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "../api";
-import { Card, Badge } from "../components/ui";
-import { Activity, Bot, Code2, MessageSquare, Phone, Users, Zap } from "lucide-react";
+import { Button, Card, Badge } from "../components/ui";
+import { Activity, Bot, Coins, MessageSquare, Phone, Users, Zap, CreditCard } from "lucide-react";
 
 const LABELS = {
   leads: "Leads",
@@ -17,11 +18,13 @@ function UsageRow({ name, value, limit, percent }) {
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-sm">
         <span className="font-medium text-slate-700">{LABELS[name] || name}</span>
-        <span className="font-mono text-xs text-slate-500">{value} / {unlimited ? "Unlimited" : limit}</span>
+        <span className="font-mono text-xs text-slate-500">{value} / {unlimited ? "Tracked" : limit}</span>
       </div>
-      <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
-        <div className="h-full bg-gold-400 rounded-full" style={{ width: `${unlimited ? 0 : Math.max(2, percent || 0)}%` }} />
-      </div>
+      {!unlimited && (
+        <div className="h-2 rounded-full bg-slate-100 overflow-hidden">
+          <div className="h-full bg-gold-400 rounded-full" style={{ width: `${Math.max(2, percent || 0)}%` }} />
+        </div>
+      )}
     </div>
   );
 }
@@ -42,46 +45,52 @@ function Provider({ icon: Icon, title, configured, detail }) {
 }
 
 export default function Workspace() {
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
-  const [plans, setPlans] = useState(null);
 
   useEffect(() => {
-    Promise.all([api.get("/saas/overview"), api.get("/saas/plans")]).then(([overview, planData]) => {
-      setData(overview.data);
-      setPlans(planData.data);
-    });
+    api.get("/saas/overview").then((response) => setData(response.data));
   }, []);
 
-  if (!data || !plans) return <div className="p-8"><div className="h-48 shimmer rounded-2xl" /></div>;
+  if (!data) return <div className="p-8"><div className="h-48 shimmer rounded-2xl" /></div>;
 
   const providerReady = Object.values(data.providers).filter((p) => p.configured).length;
   const currentPlan = data.workspace.plan;
+  const coins = data.wallet?.coin_balance ?? 0;
 
   return (
     <div className="p-6 md:p-8 space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-slate-900">Workspace & Usage</h1>
-          <p className="text-slate-500 text-sm mt-1">Real plan limits, provider readiness and monthly platform usage.</p>
+          <p className="text-slate-500 text-sm mt-1">Plan, coin wallet, provider readiness and real platform usage.</p>
         </div>
-        <Badge tone="gold">{currentPlan} plan</Badge>
+        <div className="flex items-center gap-2">
+          <Badge tone="gold">{currentPlan} plan</Badge>
+          <Button size="sm" onClick={() => navigate("/pricing")}><CreditCard className="w-4 h-4" /> Pricing</Button>
+        </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-4">
+      <div className="grid md:grid-cols-4 gap-4">
         <Card className="p-5">
           <div className="flex items-center gap-2 text-slate-500 text-xs uppercase tracking-wider"><Users className="w-4 h-4" /> Workspace</div>
-          <p className="font-heading font-bold text-xl text-slate-900 mt-3">{data.workspace.name}</p>
-          <p className="text-sm text-slate-500 mt-1">Multi-tenant workspace isolation enabled</p>
+          <p className="font-heading font-bold text-xl text-slate-900 mt-3 truncate">{data.workspace.name}</p>
+          <p className="text-sm text-slate-500 mt-1">Tenant isolated</p>
+        </Card>
+        <Card className="p-5 border-gold-200 bg-gold-50/50">
+          <div className="flex items-center gap-2 text-gold-700 text-xs uppercase tracking-wider"><Coins className="w-4 h-4" /> Coin wallet</div>
+          <p className="font-heading font-extrabold text-3xl text-slate-900 mt-3">{coins.toLocaleString()}</p>
+          <p className="text-sm text-slate-500 mt-1">{currentPlan === "Free" ? "100 one-time free coins" : "2,000 refresh monthly"}</p>
         </Card>
         <Card className="p-5">
           <div className="flex items-center gap-2 text-slate-500 text-xs uppercase tracking-wider"><Activity className="w-4 h-4" /> Providers</div>
           <p className="font-heading font-bold text-xl text-slate-900 mt-3">{providerReady} / 3 ready</p>
-          <p className="text-sm text-slate-500 mt-1">AI, WhatsApp and scheduler configuration</p>
+          <p className="text-sm text-slate-500 mt-1">AI, WhatsApp and scheduler</p>
         </Card>
         <Card className="p-5">
           <div className="flex items-center gap-2 text-slate-500 text-xs uppercase tracking-wider"><Zap className="w-4 h-4" /> Automation</div>
           <p className="font-heading font-bold text-xl text-slate-900 mt-3">{data.providers.scheduler.configured ? "Scheduler ready" : "Setup required"}</p>
-          <p className="text-sm text-slate-500 mt-1">Cloud Scheduler drives campaigns and follow-ups</p>
+          <p className="text-sm text-slate-500 mt-1">Cloud Scheduler execution</p>
         </Card>
       </div>
 
@@ -102,19 +111,12 @@ export default function Workspace() {
         </div>
       </div>
 
-      <Card className="p-6">
-        <div className="flex items-center gap-2 mb-4"><Code2 className="w-5 h-5 text-gold-600" /><h2 className="font-heading font-bold text-slate-900">Available plans</h2></div>
-        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-3">
-          {Object.entries(plans.plans).map(([name, limits]) => (
-            <div key={name} className={`rounded-xl border p-4 ${name === currentPlan ? "border-gold-300 bg-gold-50" : "border-slate-200 bg-white"}`}>
-              <div className="flex items-center justify-between"><p className="font-bold text-slate-900">{name}</p>{name === currentPlan && <Badge tone="gold">Current</Badge>}</div>
-              <p className="text-xs text-slate-500 mt-3">{limits.leads == null ? "Unlimited leads" : `${limits.leads.toLocaleString()} leads`}</p>
-              <p className="text-xs text-slate-500 mt-1">{limits.monthly_messages == null ? "Unlimited messages" : `${limits.monthly_messages.toLocaleString()} messages / month`}</p>
-              <p className="text-xs text-slate-500 mt-1">{limits.monthly_ai_actions == null ? "Unlimited AI actions" : `${limits.monthly_ai_actions.toLocaleString()} AI actions / month`}</p>
-            </div>
-          ))}
+      <Card className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="font-heading font-bold text-slate-900">Need more AI capacity?</h2>
+          <p className="text-sm text-slate-500 mt-1">Free includes 100 coins once. Pro includes 2,000 coins every month with Monthly or Annual billing.</p>
         </div>
-        <p className="text-xs text-slate-400 mt-4">Plan changes are billing-controlled; the client cannot self-upgrade by changing frontend state.</p>
+        <Button onClick={() => navigate("/pricing")}><Coins className="w-4 h-4" /> View plans</Button>
       </Card>
     </div>
   );
