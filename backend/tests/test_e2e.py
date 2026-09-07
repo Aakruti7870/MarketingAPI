@@ -43,6 +43,61 @@ def test_health_and_version():
     assert version.json()["service"]
 
 
+def test_pricing_free_coins_and_exhaustion():
+    pricing = requests.get(f"{API}/billing/pricing", timeout=10)
+    assert pricing.status_code == 200, pricing.text
+    catalog = pricing.json()
+    assert catalog["free"]["coins"] == 100
+    assert catalog["monthly"]["price"] == 1999
+    assert catalog["annual"]["price"] == 19990
+    assert catalog["annual"]["save"] == 3998
+
+    owner = register_workspace("pricing")
+    token = owner["token"]
+    assert owner["user"]["plan"] == "Free"
+    assert owner["user"]["coin_balance"] == 100
+
+    wallet = requests.get(f"{API}/billing/wallet", headers=headers(token), timeout=10)
+    assert wallet.status_code == 200, wallet.text
+    assert wallet.json()["coin_balance"] == 100
+    assert wallet.json()["coin_period"] == "lifetime"
+
+    # AI posters cost 10 coins. CI has no OpenAI key, so the endpoint returns
+    # metadata without an image but still exercises the premium AI workflow.
+    for index in range(10):
+        poster = requests.post(
+            f"{API}/ai/poster",
+            headers=headers(token),
+            json={"brief": f"E2E pricing poster {index}", "tone": "Professional", "aspect": "1:1"},
+            timeout=20,
+        )
+        assert poster.status_code == 200, poster.text
+
+    wallet = requests.get(f"{API}/billing/wallet", headers=headers(token), timeout=10)
+    assert wallet.json()["coin_balance"] == 0
+
+    blocked = requests.post(
+        f"{API}/ai/generate",
+        headers=headers(token),
+        json={"kind": "template", "prompt": "This must be blocked", "tone": "Persuasive", "channel": "WhatsApp"},
+        timeout=10,
+    )
+    assert blocked.status_code == 402, blocked.text
+    detail = blocked.json()["detail"]
+    assert detail["code"] == "coins_exhausted"
+    assert detail["pricing_url"] == "/pricing"
+
+    intent = requests.post(
+        f"{API}/billing/upgrade-intent",
+        headers=headers(token),
+        json={"interval": "year"},
+        timeout=10,
+    )
+    assert intent.status_code == 202, intent.text
+    assert intent.json()["status"] == "pending_checkout"
+    assert intent.json()["checkout_ready"] is False
+
+
 def test_workspace_lead_consent_campaign_and_isolation():
     owner = register_workspace("campaign")
     token = owner["token"]
@@ -118,7 +173,7 @@ def test_workspace_lead_consent_campaign_and_isolation():
     assert payload["status"] == "sent"
     assert payload["blocked"] == 0
     assert payload["failed"] == 0
-    assert payload["delivered"] >= 1  # CI-only simulation reports delivery.
+    assert payload["delivered"] >= 1
 
     followups = requests.get(f"{API}/autopilot", headers=headers(token), timeout=20)
     assert followups.status_code == 200, followups.text
