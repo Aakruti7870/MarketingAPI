@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import api from "../api";
+import api, { apiError } from "../api";
 import { useAuth } from "../context/AuthContext";
 import { Button, Card, Badge } from "../components/ui";
 import { Check, Coins, Crown, Sparkles, ShieldCheck, Zap } from "lucide-react";
@@ -28,7 +28,7 @@ function PlanCard({ title, price, suffix, description, features, badge, highligh
           </div>
         ))}
       </div>
-      <Button className="w-full mt-7" variant={highlighted ? "default" : "outline"} onClick={action}>{actionText}</Button>
+      <Button className="w-full mt-7" variant={highlighted ? "primary" : "outline"} onClick={action}>{actionText}</Button>
       {footnote && <p className="text-[11px] text-slate-400 text-center mt-2">{footnote}</p>}
     </Card>
   );
@@ -46,6 +46,14 @@ export default function Pricing() {
     if (user) api.get("/billing/wallet").then((r) => setWallet(r.data)).catch(() => null);
   }, [user]);
 
+  useEffect(() => {
+    const notice = sessionStorage.getItem("golde_billing_notice");
+    if (notice) {
+      toast.warning(notice);
+      sessionStorage.removeItem("golde_billing_notice");
+    }
+  }, []);
+
   const choosePaid = async (interval) => {
     if (!user) return navigate("/login");
     setBusy(interval);
@@ -57,7 +65,7 @@ export default function Pricing() {
         toast.info("Plan selected. Secure payment checkout will be connected before subscription activation.");
       }
     } catch (err) {
-      toast.error(err.response?.data?.detail || "Could not select plan");
+      toast.error(apiError(err.response?.data?.detail));
     }
     setBusy("");
   };
