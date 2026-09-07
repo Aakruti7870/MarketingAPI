@@ -20,9 +20,11 @@ if not os.environ.get("VAULT_KEY"):
     os.environ["VAULT_KEY"] = base64.urlsafe_b64encode(digest).decode()
 
 import core
+import saas
 import server
 
 app = server.app
+app.include_router(saas.router)
 
 
 def _env_bool(name: str, default: bool = False) -> bool:
@@ -32,7 +34,7 @@ def _env_bool(name: str, default: bool = False) -> bool:
     return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
-# Replace the legacy server-local AI function with the production provider.
+# Route legacy AI endpoints through the production provider.
 server.llm_text = core.llm_text
 
 if not _env_bool("SEED_DEMO_DATA", False):
@@ -69,8 +71,6 @@ async def production_indexes():
         await core.db.api_usage.create_index([("workspace_id", 1), ("at", -1)])
         await core.db.webhook_events.create_index([("workspace_id", 1), ("created_at", -1)])
     except Exception as exc:
-        # Health check will still expose DB readiness. Index failures are logged
-        # without leaking connection details.
         print(f"production index error: {type(exc).__name__}")
 
 
