@@ -57,7 +57,7 @@ export default function Layout({ children }) {
     return () => { active = false; clearInterval(timer); };
   }, []);
 
-  const title = NAV.find((item) => location.pathname.startsWith(item.path))?.name || "GOLD-e";
+  const title = NAV.find((item) => location.pathname.startsWith(item.path))?.name || "GOLD-e AI";
   const providerCount = saas ? Object.values(saas.providers).filter((provider) => provider.configured).length : 0;
   const coinBalance = saas?.wallet?.coin_balance ?? 0;
   const paidRefill = saas?.wallet?.paid_monthly_refill ?? 2000;
@@ -65,92 +65,96 @@ export default function Layout({ children }) {
   const coinPercent = plan === "Pro" ? Math.min(100, (coinBalance / paidRefill) * 100) : Math.min(100, coinBalance);
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
-      <aside className="w-64 bg-ink flex flex-col shrink-0">
-        <div className="px-5 py-5 flex items-center gap-3 border-b border-slate-800">
-          <div className="w-9 h-9 rounded-xl gold-gradient flex items-center justify-center font-heading font-extrabold text-ink text-lg">G</div>
+    <div className="flex h-screen overflow-hidden bg-gradient-to-br from-violet-50 via-white to-cyan-50/70">
+      <aside className="hidden w-64 shrink-0 flex-col border-r border-white/80 bg-white/75 backdrop-blur-xl md:flex">
+        <button onClick={() => navigate("/")} className="flex items-center gap-3 border-b border-violet-100/70 px-5 py-5 text-left">
+          <div className="brand-gradient flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-brand"><Sparkles className="h-5 w-5" /></div>
           <div>
-            <p className="font-heading font-extrabold text-white text-lg leading-none">GOLD-e</p>
-            <p className="text-[10px] text-slate-400 mt-0.5">AI Revenue Engine</p>
+            <p className="font-heading text-lg font-extrabold leading-none text-slate-950">GOLD-e AI</p>
+            <p className="mt-1 text-[10px] font-medium text-slate-400">AI Revenue Engine</p>
           </div>
-        </div>
+        </button>
 
         <div className="px-3 py-3">
-          <button onClick={() => navigate("/workspace")} className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-slate-800/50 hover:bg-slate-800 text-left transition" data-testid="workspace-switcher">
-            <div className="min-w-0">
-              <p className="text-[10px] text-slate-500 uppercase tracking-wider">Workspace</p>
-              <p className="text-sm font-semibold text-white truncate">{user?.workspace_name || "My Workspace"}</p>
-              {saas?.workspace?.plan && <p className="text-[10px] text-gold-200 mt-0.5">{saas.workspace.plan} plan</p>}
+          <button onClick={() => navigate("/workspace")} className="w-full rounded-2xl border border-violet-100 bg-white/80 px-3 py-3 text-left shadow-sm transition hover:border-violet-200" data-testid="workspace-switcher">
+            <div className="flex items-center justify-between gap-2">
+              <div className="min-w-0">
+                <p className="text-[10px] uppercase tracking-wider text-slate-400">Workspace</p>
+                <p className="truncate text-sm font-bold text-slate-900">{user?.workspace_name || "My Workspace"}</p>
+                {saas?.workspace?.plan && <p className="mt-0.5 text-[10px] font-bold text-violet-600">{saas.workspace.plan} plan</p>}
+              </div>
+              <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
             </div>
-            <ChevronDown className="w-4 h-4 text-slate-500 shrink-0" />
           </button>
         </div>
 
-        <nav className="flex-1 px-3 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 pb-3">
           {NAV.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               data-testid={`nav-${item.path.slice(1)}`}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${
-                  isActive ? "bg-gold-400/10 text-gold-200" : "text-slate-400 hover:text-white hover:bg-slate-800/40"
+                `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all ${
+                  isActive
+                    ? "border border-violet-100 bg-gradient-to-r from-violet-50 to-fuchsia-50 text-violet-700 shadow-sm"
+                    : "text-slate-500 hover:bg-white hover:text-slate-900"
                 }`
               }
             >
-              <item.icon className="w-[18px] h-[18px]" />
+              <item.icon className="h-[18px] w-[18px]" />
               <span className="flex-1">{item.name}</span>
-              {item.badge && <span className="text-[9px] font-bold px-1.5 py-0.5 rounded gold-gradient text-ink">{item.badge}</span>}
+              {item.badge && <span className="brand-gradient rounded-md px-1.5 py-0.5 text-[9px] font-extrabold text-white">{item.badge}</span>}
             </NavLink>
           ))}
         </nav>
 
-        <div className="p-3 border-t border-slate-800">
-          <button onClick={() => navigate("/pricing")} className="w-full text-left px-3 py-2 mb-2 rounded-lg hover:bg-slate-800/40">
-            <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
-              <span className="flex items-center gap-1"><Coins className="w-3 h-3" /> Coins</span>
+        <div className="border-t border-violet-100/70 p-3">
+          <button onClick={() => navigate("/pricing")} className="mb-2 w-full rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-fuchsia-50 p-3 text-left">
+            <div className="mb-1.5 flex items-center justify-between text-[10px] text-slate-500">
+              <span className="flex items-center gap-1 font-bold"><Coins className="h-3 w-3 text-violet-500" /> Coins</span>
               <span className="font-mono">{coinBalance.toLocaleString()} remaining</span>
             </div>
-            <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
-              <div className="h-full gold-gradient" style={{ width: `${Math.max(2, coinPercent)}%` }} />
+            <div className="h-1.5 overflow-hidden rounded-full bg-white">
+              <div className="brand-gradient h-full rounded-full" style={{ width: `${Math.max(2, coinPercent)}%` }} />
             </div>
           </button>
-          <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-800/40">
-            <div className="w-8 h-8 rounded-full bg-gold-400/20 flex items-center justify-center text-gold-200 font-semibold text-sm">
+          <div className="flex items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-white/80">
+            <div className="brand-gradient flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white">
               {user?.name?.[0] || "U"}
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">{user?.name}</p>
-              <p className="text-[10px] text-slate-400 capitalize">{user?.role}</p>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-bold text-slate-800">{user?.name}</p>
+              <p className="text-[10px] capitalize text-slate-400">{user?.role}</p>
             </div>
-            <button onClick={() => { logout(); navigate("/login"); }} className="text-slate-500 hover:text-red-400" data-testid="logout-btn">
-              <LogOut className="w-4 h-4" />
+            <button onClick={() => { logout(); navigate("/login"); }} className="text-slate-400 transition hover:text-rose-500" data-testid="logout-btn">
+              <LogOut className="h-4 w-4" />
             </button>
           </div>
         </div>
       </aside>
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shrink-0">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="flex h-16 shrink-0 items-center justify-between border-b border-white/80 bg-white/70 px-4 backdrop-blur-xl sm:px-6">
           <div className="flex items-center gap-2 text-sm">
-            <span className="text-slate-400">GOLD-e</span>
+            <button onClick={() => navigate("/")} className="font-semibold text-violet-500 md:text-slate-400">GOLD-e AI</button>
             <span className="text-slate-300">/</span>
-            <span className="font-semibold text-slate-800">{title}</span>
+            <span className="font-bold text-slate-800">{title}</span>
           </div>
           <div className="flex items-center gap-3">
-            <button onClick={() => setCmdOpen(true)} className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 hover:border-gold-300 hover:shadow-sm text-sm text-slate-500 transition" data-testid="open-command-center">
-              <Sparkles className="w-4 h-4 text-gold-500" />
-              <span>Ask GOLD-e</span>
-              <kbd className="hidden sm:inline font-mono text-[10px] bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">⌘K</kbd>
+            <button onClick={() => setCmdOpen(true)} className="flex items-center gap-2 rounded-xl border border-violet-100 bg-white/90 px-3.5 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-violet-200 hover:shadow-card" data-testid="open-command-center">
+              <Sparkles className="h-4 w-4 text-violet-500" />
+              <span className="hidden sm:inline">Ask GOLD-e</span>
+              <kbd className="hidden rounded border border-violet-100 bg-violet-50 px-1.5 py-0.5 font-mono text-[10px] text-violet-600 lg:inline">⌘K</kbd>
             </button>
-            <button onClick={() => navigate("/workspace")} className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full border ${providerCount === 3 ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"}`}>
-              <ShieldCheck className={`w-3.5 h-3.5 ${providerCount === 3 ? "text-emerald-600" : "text-amber-600"}`} />
-              <span className={`text-xs font-medium ${providerCount === 3 ? "text-emerald-700" : "text-amber-700"}`}>{saas ? `${providerCount}/3 providers ready` : "Checking systems…"}</span>
+            <button onClick={() => navigate("/workspace")} className={`hidden items-center gap-1.5 rounded-full border px-3 py-1.5 md:flex ${providerCount === 3 ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"}`}>
+              <ShieldCheck className={`h-3.5 w-3.5 ${providerCount === 3 ? "text-emerald-600" : "text-amber-600"}`} />
+              <span className={`text-xs font-semibold ${providerCount === 3 ? "text-emerald-700" : "text-amber-700"}`}>{saas ? `${providerCount}/3 providers ready` : "Checking systems…"}</span>
             </button>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main className="flex-1 overflow-y-auto bg-transparent">{children}</main>
       </div>
 
       <CommandCenter open={cmdOpen} onClose={() => setCmdOpen(false)} />
