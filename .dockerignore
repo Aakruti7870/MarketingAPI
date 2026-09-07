@@ -1,0 +1,15 @@
+.git
+.github
+.emergent
+memory
+test_reports
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+backend/.env
+backend/.venv
+frontend/.env
+frontend/node_modules
+frontend/build
+*.log
+.DS_Store
