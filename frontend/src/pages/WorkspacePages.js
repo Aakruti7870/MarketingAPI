@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import {
   BarChart3, Bot, BriefcaseBusiness, Check, ChevronRight, FileText, FolderOpen,
-  Globe2, History as HistoryIcon, Image, LayoutGrid, Mail, Megaphone, MessageSquare,
-  Search, Settings2, ShieldCheck, Sparkles, UploadCloud, Users, WandSparkles, Zap,
+  History as HistoryIcon, Image, Megaphone, MessageSquare, Search, Settings2,
+  ShieldCheck, Sparkles, UploadCloud, Users, Zap,
 } from "lucide-react";
 
 const WORKFLOWS = [
