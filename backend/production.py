@@ -15,8 +15,6 @@ jwt_secret = os.environ.get("JWT_SECRET", "").strip()
 if not jwt_secret:
     raise RuntimeError("JWT_SECRET is required")
 
-# server.py and core.py read VAULT_KEY at import time. Keep this deterministic
-# unless a dedicated Fernet key is explicitly configured.
 if not os.environ.get("VAULT_KEY"):
     digest = hashlib.sha256(("marketingapi-vault:" + jwt_secret).encode()).digest()
     os.environ["VAULT_KEY"] = base64.urlsafe_b64encode(digest).decode()
@@ -35,21 +33,16 @@ def _env_bool(name: str, default: bool = False) -> bool:
 
 
 # Replace the legacy server-local AI function with the production provider.
-# This keeps old endpoint code functional while removing the runtime dependency
-# on the original prototyping environment.
 server.llm_text = core.llm_text
 
-# Never create demo users/data in production unless explicitly enabled for a
-# disposable test environment.
 if not _env_bool("SEED_DEMO_DATA", False):
     async def _skip_demo_seed():
         return None
 
     server.seed = _skip_demo_seed
 
-# Firebase Hosting makes browser API calls same-origin. CORS is therefore
-# disabled by default. Optional explicit origins can be supplied for trusted
-# external web clients.
+# Firebase Hosting makes browser API calls same-origin. CORS is disabled unless
+# explicitly needed by a trusted external web client.
 allowed_origins = [
     origin.strip().rstrip("/")
     for origin in os.environ.get("ALLOWED_ORIGINS", "").split(",")
@@ -62,9 +55,27 @@ for middleware in app.user_middleware:
 app.middleware_stack = None
 
 
+@app.on_event("startup")
+async def production_indexes():
+    """Indexes needed for tenant isolation, idempotency and multi-instance limits."""
+    try:
+        await core.db.whatsapp_connections.create_index("phone_number_id", unique=True, sparse=True)
+        await core.db.followups.create_index(
+            [("workspace_id", 1), ("followup_key", 1)], unique=True, sparse=True
+        )
+        await core.db.followups.create_index([("status", 1), ("due_at", 1)])
+        await core.db.campaigns.create_index([("status", 1), ("schedule_at", 1)])
+        await core.db.api_rate_limits.create_index("expires_at", expireAfterSeconds=0)
+        await core.db.api_usage.create_index([("workspace_id", 1), ("at", -1)])
+        await core.db.webhook_events.create_index([("workspace_id", 1), ("created_at", -1)])
+    except Exception as exc:
+        # Health check will still expose DB readiness. Index failures are logged
+        # without leaking connection details.
+        print(f"production index error: {type(exc).__name__}")
+
+
 @app.get("/api/health", include_in_schema=False)
 async def health():
-    """Cloud Run/Firebase readiness endpoint with a real database ping."""
     try:
         await server.db.command("ping")
         return {
