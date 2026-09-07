@@ -5,7 +5,7 @@ import CommandCenter from "./CommandCenter";
 import {
   LayoutDashboard, Users, Kanban, MessageSquare, Send, FileText, Sparkles,
   Zap, Receipt, KeyRound, Command, LogOut, Search, Plus, ChevronDown,
-  ShieldCheck, UsersRound,
+  ShieldCheck, UsersRound, ShieldCheck as Shield, BarChart3, Code2, Phone,
 } from "lucide-react";
 
 const NAV = [
@@ -13,11 +13,15 @@ const NAV = [
   { name: "Lead Engine", icon: Users, path: "/leads", badge: "AI" },
   { name: "Sales Pipeline", icon: Kanban, path: "/pipeline" },
   { name: "Unified Inbox", icon: MessageSquare, path: "/inbox" },
-  { name: "Campaigns", icon: Send, path: "/campaigns" },
-  { name: "Templates", icon: FileText, path: "/templates" },
+  { name: "Campaign Studio", icon: Send, path: "/campaigns" },
   { name: "AI Studio", icon: Sparkles, path: "/ai-studio", badge: "HOT" },
-  { name: "Automations", icon: Zap, path: "/automations" },
+  { name: "Templates", icon: FileText, path: "/templates" },
+  { name: "Consent Guard", icon: Shield, path: "/consent" },
+  { name: "Autopilot", icon: Zap, path: "/automations" },
+  { name: "Analytics", icon: BarChart3, path: "/analytics" },
   { name: "Quotations", icon: Receipt, path: "/quotations" },
+  { name: "WhatsApp", icon: Phone, path: "/whatsapp" },
+  { name: "Developer API", icon: Code2, path: "/developer" },
   { name: "Team", icon: UsersRound, path: "/team" },
   { name: "API Vault", icon: KeyRound, path: "/vault" },
 ];

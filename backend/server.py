@@ -848,6 +848,24 @@ async def root():
 
 app.include_router(api)
 
+# ---- Upgrade modules (Consent, WhatsApp, Studio, Poster, Autopilot, Dev API, Analytics)
+import consent as consent_mod
+import whatsapp as whatsapp_mod
+import studio as studio_mod
+import poster as poster_mod
+import autopilot as autopilot_mod
+import devapi as devapi_mod
+import analytics as analytics_mod
+
+app.include_router(consent_mod.router)
+app.include_router(whatsapp_mod.router)
+app.include_router(studio_mod.router)
+app.include_router(poster_mod.router)
+app.include_router(autopilot_mod.router)
+app.include_router(devapi_mod.router)
+app.include_router(devapi_mod.v1)
+app.include_router(analytics_mod.router)
+
 
 # ------------------------------------------------------------------ seed
 async def seed():
@@ -941,7 +959,17 @@ async def seed():
 
 @app.on_event("startup")
 async def startup():
+    import asyncio
     try:
         await seed()
     except Exception as e:
         print("Seed error:", e)
+    try:
+        await db.messages.create_index([("workspace_id", 1), ("wamid", 1)])
+        await db.messages.create_index([("workspace_id", 1), ("campaign_id", 1)])
+        await db.api_keys.create_index("key_hash")
+        await db.audit.create_index([("workspace_id", 1), ("created_at", -1)])
+        await db.followups.create_index([("status", 1), ("due_at", 1)])
+    except Exception as e:
+        print("Index error:", e)
+    asyncio.create_task(autopilot_mod.autopilot_loop())

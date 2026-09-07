@@ -15,6 +15,10 @@ import Automations from "./pages/Automations";
 import Quotations from "./pages/Quotations";
 import Team from "./pages/Team";
 import Vault from "./pages/Vault";
+import Consent from "./pages/Consent";
+import Analytics from "./pages/Analytics";
+import Developer from "./pages/Developer";
+import WhatsApp from "./pages/WhatsApp";
 
 function Protected({ children }) {
   const { user } = useAuth();
@@ -50,6 +54,10 @@ export default function App() {
           <Route path="/ai-studio" element={<Protected><AIStudio /></Protected>} />
           <Route path="/automations" element={<Protected><Automations /></Protected>} />
           <Route path="/quotations" element={<Protected><Quotations /></Protected>} />
+          <Route path="/consent" element={<Protected><Consent /></Protected>} />
+          <Route path="/analytics" element={<Protected><Analytics /></Protected>} />
+          <Route path="/developer" element={<Protected><Developer /></Protected>} />
+          <Route path="/whatsapp" element={<Protected><WhatsApp /></Protected>} />
           <Route path="/team" element={<Protected><Team /></Protected>} />
           <Route path="/vault" element={<Protected><Vault /></Protected>} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
