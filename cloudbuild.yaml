@@ -1,22 +1,36 @@
 substitutions:
   _REGION: asia-south1
   _SERVICE: marketingapi
+  _AR_REPO: marketingapi
   _SCHEDULER_JOB: marketingapi-scheduler
 
 steps:
+  - id: ensure-artifact-registry
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        if ! gcloud artifacts repositories describe '${_AR_REPO}' --location '${_REGION}' >/dev/null 2>&1; then
+          gcloud artifacts repositories create '${_AR_REPO}' \
+            --repository-format=docker \
+            --location='${_REGION}' \
+            --description='MarketingAPI Cloud Run images'
+        fi
+
   - id: backend-image
     name: gcr.io/cloud-builders/docker
     args:
       - build
       - -t
-      - gcr.io/$PROJECT_ID/${_SERVICE}:$BUILD_ID
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE}:$BUILD_ID
       - .
 
   - id: push-backend
     name: gcr.io/cloud-builders/docker
     args:
       - push
-      - gcr.io/$PROJECT_ID/${_SERVICE}:$BUILD_ID
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE}:$BUILD_ID
 
   - id: deploy-cloud-run
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
@@ -25,7 +39,7 @@ steps:
       - run
       - deploy
       - ${_SERVICE}
-      - --image=gcr.io/$PROJECT_ID/${_SERVICE}:$BUILD_ID
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE}:$BUILD_ID
       - --region=${_REGION}
       - --platform=managed
       - --allow-unauthenticated
@@ -36,7 +50,7 @@ steps:
       - --min=0
       - --max=20
       - --set-env-vars=APP_ENV=production,DB_NAME=marketingapi,ENABLE_SIMULATION=false,ENABLE_IN_PROCESS_AUTOPILOT=false,OPENAI_MODEL=gpt-5,OPENAI_IMAGE_MODEL=gpt-image-1.5
-      - --set-secrets=MONGO_URL=MARKETINGAPI_MONGO_URL:latest,JWT_SECRET=MARKETINGAPI_JWT_SECRET:latest,OPENAI_API_KEY=MARKETINGAPI_OPENAI_API_KEY:latest,META_WEBHOOK_VERIFY_TOKEN=MARKETINGAPI_META_WEBHOOK_VERIFY_TOKEN:latest,CRON_SECRET=MARKETINGAPI_CRON_SECRET:latest
+      - --set-secrets=MONGO_URL=MARKETINGAPI_MONGO_URL:latest,JWT_SECRET=MARKETINGAPI_JWT_SECRET:latest,VAULT_KEY=MARKETINGAPI_VAULT_KEY:latest,OPENAI_API_KEY=MARKETINGAPI_OPENAI_API_KEY:latest,META_WEBHOOK_VERIFY_TOKEN=MARKETINGAPI_META_WEBHOOK_VERIFY_TOKEN:latest,CRON_SECRET=MARKETINGAPI_CRON_SECRET:latest
 
   - id: configure-scheduler
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
@@ -98,7 +112,7 @@ availableSecrets:
       env: CRON_SECRET
 
 images:
-  - gcr.io/$PROJECT_ID/${_SERVICE}:$BUILD_ID
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_AR_REPO}/${_SERVICE}:$BUILD_ID
 
 options:
   logging: CLOUD_LOGGING_ONLY
