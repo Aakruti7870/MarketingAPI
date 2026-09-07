@@ -4,11 +4,10 @@ import { useAuth } from "../context/AuthContext";
 import api from "../api";
 import UpgradeModal from "./UpgradeModal";
 import {
-  BarChart3, Bell, Bot, BriefcaseBusiness, ChevronDown, ChevronRight, Code2,
-  FileText, FolderOpen, Gauge, History, Home, Kanban, KeyRound, LayoutDashboard,
-  LogOut, Menu, MessageCircleMore, MessageSquare, PanelLeftClose, Phone, Receipt,
-  Search, Send, Settings, ShieldCheck, Sparkles, Sun, Users, UsersRound, WandSparkles,
-  X, Zap,
+  BarChart3, Bell, Bot, ChevronDown, ChevronRight, Code2, FileText, FolderOpen,
+  Gauge, History, Home, Kanban, KeyRound, LayoutDashboard, LogOut, Menu,
+  MessageSquare, PanelLeftClose, Phone, Receipt, Search, Send, Settings,
+  ShieldCheck, Sparkles, Sun, Users, UsersRound, WandSparkles, X, Zap,
 } from "lucide-react";
 
 const AI_NAV = [
@@ -53,9 +52,7 @@ export default function Layout({ children }) {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [saas, setSaas] = useState(null);
 
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [location.pathname]);
+  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   useEffect(() => {
     let active = true;
@@ -86,11 +83,9 @@ export default function Layout({ children }) {
         <button onClick={() => navigate("/assistant")} className="brand-gradient flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-extrabold text-white shadow-brand transition hover:-translate-y-0.5"><Sparkles className="h-4 w-4" /> New Chat</button>
       </div>
 
-      <nav className="space-y-1 px-3">
-        {AI_NAV.map((item) => <NavItem key={item.path} item={item} />)}
-      </nav>
-
+      <nav className="space-y-1 px-3">{AI_NAV.map((item) => <NavItem key={item.path} item={item} />)}</nav>
       <div className="mx-4 my-3 h-px bg-violet-100/80" />
+
       <div className="flex-1 overflow-y-auto px-3 pb-3">
         <div>
           <button onClick={() => setBusinessOpen((v) => !v)} className="mb-1 flex w-full items-center justify-between px-2 py-1.5 text-left text-[10px] font-extrabold uppercase tracking-[.16em] text-slate-400"><span>Business tools</span><ChevronDown className={`h-3.5 w-3.5 transition ${businessOpen ? "rotate-180" : ""}`} /></button>
@@ -152,9 +147,5 @@ export default function Layout({ children }) {
 
 function NavItem({ item }) {
   const Icon = item.icon;
-  return (
-    <NavLink to={item.path} data-testid={`nav-${item.path.slice(1)}`} className={({isActive}) => `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${isActive ? "bg-gradient-to-r from-violet-50 to-fuchsia-50 text-violet-700 shadow-sm ring-1 ring-violet-100" : "text-slate-500 hover:bg-white hover:text-slate-900"}`}>
-      <Icon className="h-[17px] w-[17px] shrink-0" /><span className="min-w-0 flex-1 truncate">{item.name}</span>{item.badge && <span className="brand-gradient rounded-md px-1.5 py-0.5 text-[8px] font-extrabold text-white">{item.badge}</span>}
-    </NavLink>
-  );
+  return <NavLink to={item.path} data-testid={`nav-${item.path.slice(1)}`} className={({isActive}) => `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${isActive ? "bg-gradient-to-r from-violet-50 to-fuchsia-50 text-violet-700 shadow-sm ring-1 ring-violet-100" : "text-slate-500 hover:bg-white hover:text-slate-900"}`}><Icon className="h-[17px] w-[17px] shrink-0" /><span className="min-w-0 flex-1 truncate">{item.name}</span>{item.badge && <span className="brand-gradient rounded-md px-1.5 py-0.5 text-[8px] font-extrabold text-white">{item.badge}</span>}</NavLink>;
 }
