@@ -1,9 +1,26 @@
+import base64
+import hashlib
 import os
 from pathlib import Path
 
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+
+# Production defaults must exist before importing server.py because it reads
+# required environment variables at import time.
+os.environ.setdefault("DB_NAME", "marketingapi")
+
+jwt_secret = os.environ.get("JWT_SECRET", "").strip()
+if not jwt_secret:
+    raise RuntimeError("JWT_SECRET is required")
+
+# server.py expects a Fernet-formatted key. If a dedicated VAULT_KEY is not
+# supplied, derive a deterministic key from JWT_SECRET so deployments do not
+# need a second special-format secret. Keep JWT_SECRET stable across deploys.
+if not os.environ.get("VAULT_KEY"):
+    digest = hashlib.sha256(("marketingapi-vault:" + jwt_secret).encode()).digest()
+    os.environ["VAULT_KEY"] = base64.urlsafe_b64encode(digest).decode()
 
 import server
 
