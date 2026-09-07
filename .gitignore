@@ -19,6 +19,22 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Firebase / Google Cloud local state
+.firebase/
+.firebaserc
+firebase-debug.log*
+
+# Generated tests / coverage
+coverage/
+htmlcov/
+.pytest_cache/
+test_reports/
+*.xml
+
+# Legacy prototype/runtime artifacts
+.emergent/
+memory/
+
 # OS / editors
 .DS_Store
 .idea/
@@ -26,4 +42,3 @@ yarn-error.log*
 
 # Runtime artifacts
 *.log
-coverage/
