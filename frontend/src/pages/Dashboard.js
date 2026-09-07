@@ -5,9 +5,9 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell,
   BarChart, Bar,
 } from "recharts";
-import { Users, Flame, MessageSquare, TrendingUp, DollarSign, Send, Bot, Timer } from "lucide-react";
+import { Users, Flame, MessageSquare, TrendingUp, DollarSign, Send, Bot, Gauge } from "lucide-react";
 
-const fmt = (n) => new Intl.NumberFormat().format(n);
+const fmt = (n) => new Intl.NumberFormat().format(n ?? 0);
 
 function Kpi({ icon: Icon, label, value, sub, tone = "gold" }) {
   const tones = { gold: "bg-gold-50 text-gold-600", red: "bg-red-50 text-red-500", blue: "bg-blue-50 text-blue-500", green: "bg-emerald-50 text-emerald-500" };
@@ -25,10 +25,16 @@ function Kpi({ icon: Icon, label, value, sub, tone = "gold" }) {
 
 export default function Dashboard() {
   const [d, setD] = useState(null);
+  const [saas, setSaas] = useState(null);
 
-  useEffect(() => { api.get("/dashboard").then((r) => setD(r.data)); }, []);
+  useEffect(() => {
+    Promise.all([api.get("/dashboard"), api.get("/saas/overview")]).then(([dashboard, workspace]) => {
+      setD(dashboard.data);
+      setSaas(workspace.data);
+    });
+  }, []);
 
-  if (!d) return <div className="p-8"><div className="h-40 shimmer rounded-2xl" /></div>;
+  if (!d || !saas) return <div className="p-8"><div className="h-40 shimmer rounded-2xl" /></div>;
   const k = d.kpis;
   const PIE = ["#EF4444", "#EAB308", "#38BDF8"];
 
@@ -36,20 +42,20 @@ export default function Dashboard() {
     <div className="p-6 md:p-8 space-y-6">
       <div>
         <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-slate-900">Command Dashboard</h1>
-        <p className="text-slate-500 text-sm mt-1">Your revenue engine at a glance — live across every channel.</p>
+        <p className="text-slate-500 text-sm mt-1">Live workspace, pipeline and platform usage at a glance.</p>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4" data-testid="kpi-grid">
         <Kpi icon={Users} label="Total Leads" value={fmt(k.total_leads)} tone="gold" />
-        <Kpi icon={Flame} label="Hot Leads" value={fmt(k.hot_leads)} tone="red" sub="AI scored" />
+        <Kpi icon={Flame} label="Hot Leads" value={fmt(k.hot_leads)} tone="red" sub="Scored" />
         <Kpi icon={DollarSign} label="Pipeline Value" value={`₹${fmt(k.revenue)}`} tone="green" />
         <Kpi icon={TrendingUp} label="Conversion" value={`${k.conversion}%`} tone="blue" />
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Kpi icon={Send} label="Campaigns" value={fmt(k.campaigns)} tone="gold" />
         <Kpi icon={MessageSquare} label="Replies" value={fmt(k.replies)} tone="blue" />
-        <Kpi icon={Timer} label="Avg Response" value={k.avg_response} tone="green" />
-        <Kpi icon={Bot} label="AI Spend" value={`$${k.ai_cost}`} sub={`of $${k.ai_budget}`} tone="gold" />
+        <Kpi icon={Gauge} label="Messages This Month" value={fmt(saas.usage.monthly_messages)} sub={saas.workspace.plan} tone="green" />
+        <Kpi icon={Bot} label="AI Actions This Month" value={fmt(saas.usage.monthly_ai_actions)} sub={saas.providers.openai.configured ? "AI ready" : "Setup AI"} tone="gold" />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
