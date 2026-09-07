@@ -16,7 +16,6 @@ services:
       MONGO_URL: mongodb://mongo:27017
       DB_NAME: marketingapi
       JWT_SECRET: ${JWT_SECRET}
-      VAULT_KEY: ${VAULT_KEY}
       SEED_DEMO_DATA: "false"
       ALLOWED_ORIGINS: http://localhost:8080
 
