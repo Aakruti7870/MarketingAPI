@@ -1,47 +1,13 @@
-"""Workspace SaaS plan, entitlement, usage and provider-readiness APIs.
-
-This module intentionally does not let a workspace self-upgrade. Billing can
-later update workspaces.plan after a verified payment/webhook event.
-"""
+"""Workspace SaaS plan, entitlement, usage and provider-readiness APIs."""
 import os
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends
 
+from billing import PLAN_LIMITS, PRICING, ensure_wallet
 from core import db, get_current_user
 
 router = APIRouter(prefix="/api/saas")
-
-PLANS = {
-    "Starter": {
-        "leads": 1000,
-        "team_members": 3,
-        "monthly_messages": 2000,
-        "api_keys": 2,
-        "monthly_ai_actions": 200,
-    },
-    "Growth": {
-        "leads": 10000,
-        "team_members": 10,
-        "monthly_messages": 25000,
-        "api_keys": 10,
-        "monthly_ai_actions": 2000,
-    },
-    "Scale": {
-        "leads": 100000,
-        "team_members": 50,
-        "monthly_messages": 250000,
-        "api_keys": 50,
-        "monthly_ai_actions": 20000,
-    },
-    "Enterprise": {
-        "leads": None,
-        "team_members": None,
-        "monthly_messages": None,
-        "api_keys": None,
-        "monthly_ai_actions": None,
-    },
-}
 
 
 def _month_start() -> str:
@@ -59,11 +25,12 @@ def _pct(value: int, limit: int | None) -> float | None:
 
 @router.get("/plans")
 async def plans(user: dict = Depends(get_current_user)):
-    workspace = await db.workspaces.find_one({"id": user["workspace_id"]}) or {}
-    current = workspace.get("plan") or "Growth"
+    workspace = await ensure_wallet(user["workspace_id"])
+    current = workspace.get("plan") or "Free"
     return {
-        "current": current if current in PLANS else "Growth",
-        "plans": PLANS,
+        "current": current if current in PLAN_LIMITS else "Free",
+        "plans": PLAN_LIMITS,
+        "pricing": PRICING,
         "billing_managed": True,
     }
 
@@ -71,11 +38,11 @@ async def plans(user: dict = Depends(get_current_user)):
 @router.get("/overview")
 async def overview(user: dict = Depends(get_current_user)):
     ws = user["workspace_id"]
-    workspace = await db.workspaces.find_one({"id": ws}) or {}
-    plan = workspace.get("plan") or "Growth"
-    if plan not in PLANS:
-        plan = "Growth"
-    limits = PLANS[plan]
+    workspace = await ensure_wallet(ws)
+    plan = workspace.get("plan") or "Free"
+    if plan not in PLAN_LIMITS:
+        plan = "Free"
+    limits = PLAN_LIMITS[plan]
     month_start = _month_start()
 
     leads = await db.leads.count_documents({"workspace_id": ws})
@@ -115,6 +82,14 @@ async def overview(user: dict = Depends(get_current_user)):
             "id": ws,
             "name": workspace.get("name", user.get("workspace_name", "")),
             "plan": plan,
+            "billing_interval": workspace.get("billing_interval"),
+            "subscription_status": workspace.get("subscription_status", "free"),
+        },
+        "wallet": {
+            "coin_balance": workspace.get("coin_balance", 0),
+            "coin_period": workspace.get("coin_period", "lifetime"),
+            "free_grant": 100,
+            "paid_monthly_refill": 2000,
         },
         "usage": usage,
         "limits": limits,
