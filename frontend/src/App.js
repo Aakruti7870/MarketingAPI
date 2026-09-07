@@ -19,6 +19,7 @@ import Consent from "./pages/Consent";
 import Analytics from "./pages/Analytics";
 import Developer from "./pages/Developer";
 import WhatsApp from "./pages/WhatsApp";
+import Workspace from "./pages/Workspace";
 
 function Protected({ children }) {
   const { user } = useAuth();
@@ -60,6 +61,7 @@ export default function App() {
           <Route path="/whatsapp" element={<Protected><WhatsApp /></Protected>} />
           <Route path="/team" element={<Protected><Team /></Protected>} />
           <Route path="/vault" element={<Protected><Vault /></Protected>} />
+          <Route path="/workspace" element={<Protected><Workspace /></Protected>} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
