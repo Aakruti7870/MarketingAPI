@@ -30,7 +30,6 @@ async def schedule_followups(workspace_id: str, campaign: dict, lead: dict):
     base = now()
     for idx, step in enumerate(fu.get("steps", [])):
         due = base + _delta(unit, int(step.get("day", (idx + 1) * 2)))
-        # Deterministic key makes retries idempotent.
         followup_key = f"{campaign['id']}:{lead['id']}:{idx}"
         await db.followups.update_one(
             {"workspace_id": workspace_id, "followup_key": followup_key},
@@ -75,7 +74,6 @@ async def run_due(limit: int = 200) -> dict:
 
     summary = {"found": len(due), "sent": 0, "blocked": 0, "failed": 0, "stopped": 0}
     for item in due:
-        # Multiple Cloud Run instances/scheduler retries may race. Claim first.
         claim = await db.followups.update_one(
             {"id": item["id"], "status": "scheduled"},
             {"$set": {"status": "processing", "processing_at": now_iso()}},
@@ -120,15 +118,11 @@ async def run_due(limit: int = 200) -> dict:
                 campaign=campaign,
                 actor=f"autopilot:{campaign.get('name')}",
             )
-            status = result.get("status")
-            final_status = "blocked" if status == "blocked" else "failed" if status == "failed" else "sent"
+            state = result.get("status")
+            final_status = "blocked" if state == "blocked" else "failed" if state == "failed" else "sent"
             await db.followups.update_one(
                 {"id": item["id"], "status": "processing"},
-                {"$set": {
-                    "status": final_status,
-                    "sent_at": now_iso(),
-                    "result": status,
-                }},
+                {"$set": {"status": final_status, "sent_at": now_iso(), "result": state}},
             )
             summary[final_status] += 1
         except Exception as exc:
@@ -145,13 +139,22 @@ async def run_due(limit: int = 200) -> dict:
     return summary
 
 
+async def run_saas_scheduler() -> dict:
+    """One production scheduler pass: campaigns first, then due follow-ups."""
+    from studio import run_scheduled_campaigns
+
+    campaigns = await run_scheduled_campaigns()
+    followups = await run_due()
+    return {"campaigns": campaigns, "followups": followups, "ran_at": now_iso()}
+
+
 async def autopilot_loop():
     """Local-only compatibility loop; disabled by default on Cloud Run."""
     if os.environ.get("ENABLE_IN_PROCESS_AUTOPILOT", "false").lower() not in {"1", "true", "yes", "on"}:
         return
     while True:
         try:
-            await run_due()
+            await run_saas_scheduler()
         except Exception as exc:
             print(f"autopilot loop error: {type(exc).__name__}")
         await asyncio.sleep(30)
@@ -159,14 +162,14 @@ async def autopilot_loop():
 
 @router.post("/internal/run")
 async def scheduler_tick(request: Request):
-    """Cloud Scheduler target. Protect with CRON_SECRET in Secret Manager."""
+    """Cloud Scheduler target. Protect with CRON_SECRET from Secret Manager."""
     configured = os.environ.get("CRON_SECRET", "")
     supplied = request.headers.get("X-Cron-Secret", "")
     if not configured:
         raise HTTPException(status_code=503, detail="Scheduler secret is not configured")
     if not supplied or not secrets.compare_digest(configured, supplied):
         raise HTTPException(status_code=401, detail="Invalid scheduler credential")
-    return await run_due()
+    return await run_saas_scheduler()
 
 
 @router.get("")
