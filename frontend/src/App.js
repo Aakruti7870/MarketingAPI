@@ -5,6 +5,8 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 import Layout from "./components/Layout";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
+import Assistant from "./pages/Assistant";
+import { ExplorePage, UseCasesPage, FilesPage, HistoryPage, SettingsPage } from "./pages/WorkspacePages";
 import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
 import Pipeline from "./pages/Pipeline";
@@ -25,19 +27,14 @@ import Pricing from "./pages/Pricing";
 
 function Protected({ children }) {
   const { user } = useAuth();
-  if (user === null)
-    return (
-      <div className="h-screen flex items-center justify-center bg-violet-50">
-        <div className="w-10 h-10 rounded-xl brand-gradient animate-pulse shadow-brand" />
-      </div>
-    );
+  if (user === null) return <div className="flex h-screen items-center justify-center bg-violet-50"><div className="brand-gradient h-10 w-10 animate-pulse rounded-xl shadow-brand" /></div>;
   if (!user) return <Navigate to="/login" replace />;
   return <Layout>{children}</Layout>;
 }
 
 function GuestOnly({ children }) {
   const { user } = useAuth();
-  if (user) return <Navigate to="/dashboard" replace />;
+  if (user) return <Navigate to="/assistant" replace />;
   return children;
 }
 
@@ -50,6 +47,14 @@ export default function App() {
           <Route path="/" element={<Landing />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/login" element={<GuestOnly><Auth /></GuestOnly>} />
+
+          <Route path="/assistant" element={<Protected><Assistant /></Protected>} />
+          <Route path="/explore" element={<Protected><ExplorePage /></Protected>} />
+          <Route path="/use-cases" element={<Protected><UseCasesPage /></Protected>} />
+          <Route path="/files" element={<Protected><FilesPage /></Protected>} />
+          <Route path="/history" element={<Protected><HistoryPage /></Protected>} />
+          <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
+
           <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
           <Route path="/leads" element={<Protected><Leads /></Protected>} />
           <Route path="/pipeline" element={<Protected><Pipeline /></Protected>} />

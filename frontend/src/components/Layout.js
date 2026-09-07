@@ -1,15 +1,24 @@
-import React, { useState, useEffect } from "react";
-import { NavLink, useNavigate, useLocation } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../api";
-import CommandCenter from "./CommandCenter";
+import UpgradeModal from "./UpgradeModal";
 import {
-  LayoutDashboard, Users, Kanban, MessageSquare, Send, FileText, Sparkles,
-  Zap, Receipt, KeyRound, LogOut, ChevronDown, ShieldCheck, Coins,
-  UsersRound, ShieldCheck as Shield, BarChart3, Code2, Phone, Gauge, CreditCard,
+  BarChart3, Bell, Bot, ChevronDown, ChevronRight, Code2, FileText, FolderOpen,
+  Gauge, History, Home, Kanban, KeyRound, LayoutDashboard, LogOut, Menu,
+  MessageSquare, PanelLeftClose, Phone, Receipt, Search, Send, Settings,
+  ShieldCheck, Sparkles, Sun, Users, UsersRound, WandSparkles, X, Zap,
 } from "lucide-react";
 
-const NAV = [
+const AI_NAV = [
+  { name: "AI Assistant", icon: Bot, path: "/assistant" },
+  { name: "Explore", icon: Search, path: "/explore" },
+  { name: "Use Cases", icon: WandSparkles, path: "/use-cases" },
+  { name: "My Files", icon: FolderOpen, path: "/files" },
+  { name: "History", icon: History, path: "/history" },
+];
+
+const BUSINESS_NAV = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
   { name: "Lead Engine", icon: Users, path: "/leads", badge: "AI" },
   { name: "Sales Pipeline", icon: Kanban, path: "/pipeline" },
@@ -17,35 +26,33 @@ const NAV = [
   { name: "Campaign Studio", icon: Send, path: "/campaigns" },
   { name: "AI Studio", icon: Sparkles, path: "/ai-studio", badge: "AI" },
   { name: "Templates", icon: FileText, path: "/templates" },
-  { name: "Consent Guard", icon: Shield, path: "/consent" },
   { name: "Autopilot", icon: Zap, path: "/automations" },
   { name: "Analytics", icon: BarChart3, path: "/analytics" },
+];
+
+const MORE_NAV = [
   { name: "Quotations", icon: Receipt, path: "/quotations" },
   { name: "WhatsApp", icon: Phone, path: "/whatsapp" },
+  { name: "Consent Guard", icon: ShieldCheck, path: "/consent" },
   { name: "Developer API", icon: Code2, path: "/developer" },
   { name: "Team", icon: UsersRound, path: "/team" },
   { name: "API Vault", icon: KeyRound, path: "/vault" },
-  { name: "Workspace & Usage", icon: Gauge, path: "/workspace" },
-  { name: "Pricing", icon: CreditCard, path: "/pricing" },
+  { name: "Workspace", icon: Gauge, path: "/workspace" },
 ];
+
+const RECENT = ["Brand identity ideas for launch", "Warm lead follow-up", "September campaign plan"];
 
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
-  const [cmdOpen, setCmdOpen] = useState(false);
-  const [saas, setSaas] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [businessOpen, setBusinessOpen] = useState(true);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [saas, setSaas] = useState(null);
 
-  useEffect(() => {
-    const handler = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setCmdOpen((value) => !value);
-      }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, []);
+  useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   useEffect(() => {
     let active = true;
@@ -57,107 +64,88 @@ export default function Layout({ children }) {
     return () => { active = false; clearInterval(timer); };
   }, []);
 
-  const title = NAV.find((item) => location.pathname.startsWith(item.path))?.name || "GOLD-e AI";
-  const providerCount = saas ? Object.values(saas.providers).filter((provider) => provider.configured).length : 0;
+  const allNav = [...AI_NAV, ...BUSINESS_NAV, ...MORE_NAV, { name: "Settings", path: "/settings" }];
+  const title = allNav.find((item) => location.pathname.startsWith(item.path))?.name || "GOLD-e AI";
   const coinBalance = saas?.wallet?.coin_balance ?? 0;
-  const paidRefill = saas?.wallet?.paid_monthly_refill ?? 2000;
-  const plan = saas?.workspace?.plan || "Free";
-  const coinPercent = plan === "Pro" ? Math.min(100, (coinBalance / paidRefill) * 100) : Math.min(100, coinBalance);
+  const plan = saas?.workspace?.plan || user?.plan || "Free";
 
-  return (
-    <div className="flex h-screen overflow-hidden bg-gradient-to-br from-violet-50 via-white to-cyan-50/70">
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-white/80 bg-white/75 backdrop-blur-xl md:flex">
-        <button onClick={() => navigate("/")} className="flex items-center gap-3 border-b border-violet-100/70 px-5 py-5 text-left">
-          <div className="brand-gradient flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-brand"><Sparkles className="h-5 w-5" /></div>
-          <div>
-            <p className="font-heading text-lg font-extrabold leading-none text-slate-950">GOLD-e AI</p>
-            <p className="mt-1 text-[10px] font-medium text-slate-400">AI Revenue Engine</p>
-          </div>
+  const sidebar = (
+    <aside className="flex h-full w-[270px] shrink-0 flex-col border-r border-violet-100/80 bg-white/82 backdrop-blur-2xl">
+      <div className="flex h-[72px] items-center justify-between border-b border-violet-100/70 px-4">
+        <button onClick={() => navigate("/")} className="flex min-w-0 items-center gap-3 text-left">
+          <div className="brand-gradient flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-white shadow-brand"><Sparkles className="h-5 w-5" /></div>
+          <div className="min-w-0"><div className="font-heading text-lg font-extrabold tracking-tight text-slate-950">GOLD-e AI</div><div className="truncate text-[10px] font-semibold text-slate-400">AI Revenue Engine</div></div>
+        </button>
+        <button onClick={() => setMobileOpen(false)} className="soft-round md:hidden"><X className="h-4 w-4" /></button>
+      </div>
+
+      <div className="px-3 pb-2 pt-3">
+        <button onClick={() => navigate("/assistant")} className="brand-gradient flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-extrabold text-white shadow-brand transition hover:-translate-y-0.5"><Sparkles className="h-4 w-4" /> New Chat</button>
+      </div>
+
+      <nav className="space-y-1 px-3">{AI_NAV.map((item) => <NavItem key={item.path} item={item} />)}</nav>
+      <div className="mx-4 my-3 h-px bg-violet-100/80" />
+
+      <div className="flex-1 overflow-y-auto px-3 pb-3">
+        <div>
+          <button onClick={() => setBusinessOpen((v) => !v)} className="mb-1 flex w-full items-center justify-between px-2 py-1.5 text-left text-[10px] font-extrabold uppercase tracking-[.16em] text-slate-400"><span>Business tools</span><ChevronDown className={`h-3.5 w-3.5 transition ${businessOpen ? "rotate-180" : ""}`} /></button>
+          {businessOpen && <div className="space-y-1">{BUSINESS_NAV.map((item) => <NavItem key={item.path} item={item} />)}</div>}
+        </div>
+
+        <div className="mt-4">
+          <button onClick={() => setMoreOpen((v) => !v)} className="mb-1 flex w-full items-center justify-between px-2 py-1.5 text-left text-[10px] font-extrabold uppercase tracking-[.16em] text-slate-400"><span>More tools</span><ChevronDown className={`h-3.5 w-3.5 transition ${moreOpen ? "rotate-180" : ""}`} /></button>
+          {moreOpen && <div className="space-y-1">{MORE_NAV.map((item) => <NavItem key={item.path} item={item} />)}</div>}
+        </div>
+
+        <div className="mt-5 px-2"><div className="mb-2 text-[10px] font-extrabold uppercase tracking-[.16em] text-slate-400">Recent Chats</div><div className="space-y-1">{RECENT.map((item) => <button key={item} onClick={() => navigate("/history")} className="block w-full truncate rounded-lg px-2 py-1.5 text-left text-xs font-medium text-slate-500 transition hover:bg-violet-50 hover:text-violet-700">{item}</button>)}</div></div>
+      </div>
+
+      <div className="border-t border-violet-100/80 p-3">
+        <button onClick={() => setUpgradeOpen(true)} className="mb-2 w-full rounded-[22px] border border-violet-100 bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 p-4 text-left shadow-sm transition hover:border-violet-200 hover:shadow-card">
+          <div className="flex items-center justify-between"><div className="soft-icon !h-9 !w-9"><Sparkles className="h-4 w-4" /></div><span className="rounded-full bg-slate-900 px-2 py-1 text-[9px] font-extrabold text-white">{plan.toUpperCase()}</span></div>
+          <div className="mt-3 text-sm font-extrabold text-slate-900">Upgrade to PRO</div>
+          <p className="mt-1 text-[11px] leading-4 text-slate-500">Unlock more coins, team capacity and advanced AI workflows.</p>
+          <div className="mt-3 flex items-center justify-between"><span className="text-[10px] font-bold text-slate-400">{coinBalance.toLocaleString()} coins remaining</span><ChevronRight className="h-3.5 w-3.5 text-violet-500" /></div>
         </button>
 
-        <div className="px-3 py-3">
-          <button onClick={() => navigate("/workspace")} className="w-full rounded-2xl border border-violet-100 bg-white/80 px-3 py-3 text-left shadow-sm transition hover:border-violet-200" data-testid="workspace-switcher">
-            <div className="flex items-center justify-between gap-2">
-              <div className="min-w-0">
-                <p className="text-[10px] uppercase tracking-wider text-slate-400">Workspace</p>
-                <p className="truncate text-sm font-bold text-slate-900">{user?.workspace_name || "My Workspace"}</p>
-                {saas?.workspace?.plan && <p className="mt-0.5 text-[10px] font-bold text-violet-600">{saas.workspace.plan} plan</p>}
-              </div>
-              <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
-            </div>
-          </button>
+        <div className="grid grid-cols-2 gap-1">
+          <NavLink to="/settings" className={({isActive}) => `flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold ${isActive ? "bg-violet-50 text-violet-700" : "text-slate-500 hover:bg-white"}`}><Settings className="h-4 w-4" /> Settings</NavLink>
+          <button onClick={() => { logout(); navigate("/login"); }} className="flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-slate-500 transition hover:bg-rose-50 hover:text-rose-600"><LogOut className="h-4 w-4" /> Sign out</button>
         </div>
+      </div>
+    </aside>
+  );
 
-        <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 pb-3">
-          {NAV.map((item) => (
-            <NavLink
-              key={item.path}
-              to={item.path}
-              data-testid={`nav-${item.path.slice(1)}`}
-              className={({ isActive }) =>
-                `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all ${
-                  isActive
-                    ? "border border-violet-100 bg-gradient-to-r from-violet-50 to-fuchsia-50 text-violet-700 shadow-sm"
-                    : "text-slate-500 hover:bg-white hover:text-slate-900"
-                }`
-              }
-            >
-              <item.icon className="h-[18px] w-[18px]" />
-              <span className="flex-1">{item.name}</span>
-              {item.badge && <span className="brand-gradient rounded-md px-1.5 py-0.5 text-[9px] font-extrabold text-white">{item.badge}</span>}
-            </NavLink>
-          ))}
-        </nav>
-
-        <div className="border-t border-violet-100/70 p-3">
-          <button onClick={() => navigate("/pricing")} className="mb-2 w-full rounded-2xl border border-violet-100 bg-gradient-to-br from-violet-50 to-fuchsia-50 p-3 text-left">
-            <div className="mb-1.5 flex items-center justify-between text-[10px] text-slate-500">
-              <span className="flex items-center gap-1 font-bold"><Coins className="h-3 w-3 text-violet-500" /> Coins</span>
-              <span className="font-mono">{coinBalance.toLocaleString()} remaining</span>
-            </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-white">
-              <div className="brand-gradient h-full rounded-full" style={{ width: `${Math.max(2, coinPercent)}%` }} />
-            </div>
-          </button>
-          <div className="flex items-center gap-2.5 rounded-xl px-3 py-2 hover:bg-white/80">
-            <div className="brand-gradient flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold text-white">
-              {user?.name?.[0] || "U"}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-bold text-slate-800">{user?.name}</p>
-              <p className="text-[10px] capitalize text-slate-400">{user?.role}</p>
-            </div>
-            <button onClick={() => { logout(); navigate("/login"); }} className="text-slate-400 transition hover:text-rose-500" data-testid="logout-btn">
-              <LogOut className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
-      </aside>
+  return (
+    <div className="app-shell flex h-screen overflow-hidden">
+      <div className="hidden md:block">{sidebar}</div>
+      {mobileOpen && <div className="fixed inset-0 z-50 md:hidden"><button aria-label="Close navigation" className="absolute inset-0 bg-slate-950/25 backdrop-blur-sm" onClick={() => setMobileOpen(false)} /><div className="relative h-full w-[286px] shadow-2xl">{sidebar}</div></div>}
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex h-16 shrink-0 items-center justify-between border-b border-white/80 bg-white/70 px-4 backdrop-blur-xl sm:px-6">
-          <div className="flex items-center gap-2 text-sm">
-            <button onClick={() => navigate("/")} className="font-semibold text-violet-500 md:text-slate-400">GOLD-e AI</button>
-            <span className="text-slate-300">/</span>
-            <span className="font-bold text-slate-800">{title}</span>
+        <header className="flex h-[72px] shrink-0 items-center justify-between border-b border-violet-100/70 bg-white/72 px-4 backdrop-blur-2xl sm:px-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <button onClick={() => setMobileOpen(true)} className="soft-round md:hidden"><Menu className="h-4 w-4" /></button>
+            <div className="hidden h-9 w-9 items-center justify-center rounded-xl border border-violet-100 bg-white text-violet-600 shadow-sm sm:flex"><PanelLeftClose className="h-4 w-4" /></div>
+            <div className="min-w-0"><div className="truncate font-heading text-base font-extrabold text-slate-950 sm:text-lg">{title}</div><div className="hidden text-[10px] font-semibold text-slate-400 sm:block">{user?.workspace_name || "My Workspace"}</div></div>
           </div>
-          <div className="flex items-center gap-3">
-            <button onClick={() => setCmdOpen(true)} className="flex items-center gap-2 rounded-xl border border-violet-100 bg-white/90 px-3.5 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-violet-200 hover:shadow-card" data-testid="open-command-center">
-              <Sparkles className="h-4 w-4 text-violet-500" />
-              <span className="hidden sm:inline">Ask GOLD-e</span>
-              <kbd className="hidden rounded border border-violet-100 bg-violet-50 px-1.5 py-0.5 font-mono text-[10px] text-violet-600 lg:inline">⌘K</kbd>
-            </button>
-            <button onClick={() => navigate("/workspace")} className={`hidden items-center gap-1.5 rounded-full border px-3 py-1.5 md:flex ${providerCount === 3 ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50"}`}>
-              <ShieldCheck className={`h-3.5 w-3.5 ${providerCount === 3 ? "text-emerald-600" : "text-amber-600"}`} />
-              <span className={`text-xs font-semibold ${providerCount === 3 ? "text-emerald-700" : "text-amber-700"}`}>{saas ? `${providerCount}/3 providers ready` : "Checking systems…"}</span>
-            </button>
+
+          <div className="flex items-center gap-2">
+            <button title="Notifications" className="top-icon relative"><Bell className="h-4 w-4" /><span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-rose-500 ring-2 ring-white" /></button>
+            <button title="Appearance" className="top-icon"><Sun className="h-4 w-4" /></button>
+            <button onClick={() => navigate("/dashboard")} title="Workspace dashboard" className="top-icon hidden sm:flex"><Home className="h-4 w-4" /></button>
+            <button onClick={() => navigate("/workspace")} className="ml-1 flex h-9 w-9 items-center justify-center rounded-full brand-gradient text-sm font-extrabold text-white shadow-brand">{(user?.name || "U")[0]?.toUpperCase()}</button>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto bg-transparent">{children}</main>
+        <main className="app-content flex-1 overflow-y-auto">{children}</main>
       </div>
 
-      <CommandCenter open={cmdOpen} onClose={() => setCmdOpen(false)} />
+      <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
     </div>
   );
+}
+
+function NavItem({ item }) {
+  const Icon = item.icon;
+  return <NavLink to={item.path} data-testid={`nav-${item.path.slice(1)}`} className={({isActive}) => `group flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${isActive ? "bg-gradient-to-r from-violet-50 to-fuchsia-50 text-violet-700 shadow-sm ring-1 ring-violet-100" : "text-slate-500 hover:bg-white hover:text-slate-900"}`}><Icon className="h-[17px] w-[17px] shrink-0" /><span className="min-w-0 flex-1 truncate">{item.name}</span>{item.badge && <span className="brand-gradient rounded-md px-1.5 py-0.5 text-[8px] font-extrabold text-white">{item.badge}</span>}</NavLink>;
 }

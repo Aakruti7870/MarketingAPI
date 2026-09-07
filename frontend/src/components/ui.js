@@ -1,39 +1,27 @@
 import React from "react";
 
 export function Button({ variant = "primary", size = "md", className = "", children, ...props }) {
-  const base =
-    "inline-flex items-center justify-center gap-2 font-medium rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none";
+  const base = "inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-100";
   const sizes = { sm: "px-3 py-1.5 text-sm", md: "px-4 py-2.5 text-sm", lg: "px-5 py-3 text-base" };
   const variants = {
-    primary: "gold-gradient text-ink font-semibold shadow-gold hover:shadow-hover hover:-translate-y-0.5",
-    dark: "bg-ink text-white hover:bg-slate-800",
-    outline: "border border-slate-300 bg-white text-slate-700 hover:border-gold-400 hover:text-gold-700",
-    ghost: "text-slate-600 hover:bg-slate-100",
-    danger: "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100",
+    primary: "brand-gradient text-white shadow-brand hover:-translate-y-0.5 hover:shadow-hover",
+    dark: "bg-slate-950 text-white shadow-sm hover:bg-slate-800",
+    outline: "border border-violet-100 bg-white/85 text-slate-700 shadow-sm hover:border-violet-200 hover:text-violet-700",
+    ghost: "text-slate-600 hover:bg-violet-50 hover:text-violet-700",
+    danger: "border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100",
   };
-  return (
-    <button className={`${base} ${sizes[size]} ${variants[variant]} ${className}`} {...props}>
-      {children}
-    </button>
-  );
+  return <button className={`${base} ${sizes[size]} ${variants[variant]} ${className}`} {...props}>{children}</button>;
 }
 
 export function Card({ className = "", children, ...props }) {
-  return (
-    <div className={`card ${className}`} {...props}>
-      {children}
-    </div>
-  );
+  return <div className={`card ${className}`} {...props}>{children}</div>;
 }
 
 export function Input({ className = "", label, ...props }) {
   return (
     <label className="block">
-      {label && <span className="text-xs font-semibold text-slate-600 mb-1.5 block">{label}</span>}
-      <input
-        className={`w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:border-gold-400 focus:ring-2 focus:ring-gold-100 outline-none transition ${className}`}
-        {...props}
-      />
+      {label && <span className="mb-1.5 block text-xs font-bold text-slate-500">{label}</span>}
+      <input className={`w-full rounded-xl border border-violet-100 bg-white/88 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:ring-4 focus:ring-violet-100/70 ${className}`} {...props} />
     </label>
   );
 }
@@ -41,11 +29,8 @@ export function Input({ className = "", label, ...props }) {
 export function Textarea({ className = "", label, ...props }) {
   return (
     <label className="block">
-      {label && <span className="text-xs font-semibold text-slate-600 mb-1.5 block">{label}</span>}
-      <textarea
-        className={`w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm text-slate-900 placeholder:text-slate-400 focus:border-gold-400 focus:ring-2 focus:ring-gold-100 outline-none transition ${className}`}
-        {...props}
-      />
+      {label && <span className="mb-1.5 block text-xs font-bold text-slate-500">{label}</span>}
+      <textarea className={`w-full rounded-xl border border-violet-100 bg-white/88 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-violet-300 focus:ring-4 focus:ring-violet-100/70 ${className}`} {...props} />
     </label>
   );
 }
@@ -53,44 +38,35 @@ export function Textarea({ className = "", label, ...props }) {
 export function Select({ className = "", label, children, ...props }) {
   return (
     <label className="block">
-      {label && <span className="text-xs font-semibold text-slate-600 mb-1.5 block">{label}</span>}
-      <select
-        className={`w-full px-3.5 py-2.5 rounded-xl border border-slate-300 bg-white text-sm text-slate-900 focus:border-gold-400 focus:ring-2 focus:ring-gold-100 outline-none transition ${className}`}
-        {...props}
-      >
-        {children}
-      </select>
+      {label && <span className="mb-1.5 block text-xs font-bold text-slate-500">{label}</span>}
+      <select className={`w-full rounded-xl border border-violet-100 bg-white/90 px-3.5 py-2.5 text-sm text-slate-900 outline-none transition focus:border-violet-300 focus:ring-4 focus:ring-violet-100/70 ${className}`} {...props}>{children}</select>
     </label>
   );
 }
 
 export function Badge({ tone = "slate", children, className = "" }) {
   const tones = {
-    HOT: "bg-red-50 text-red-600 border-red-200",
-    WARM: "bg-yellow-50 text-yellow-700 border-yellow-200",
-    COLD: "bg-sky-50 text-sky-600 border-sky-200",
-    gold: "bg-gold-50 text-gold-700 border-gold-200",
-    green: "bg-emerald-50 text-emerald-600 border-emerald-200",
-    slate: "bg-slate-100 text-slate-600 border-slate-200",
-    blue: "bg-blue-50 text-blue-600 border-blue-200",
-    purple: "bg-purple-50 text-purple-600 border-purple-200",
+    HOT: "border-rose-200 bg-rose-50 text-rose-600",
+    WARM: "border-amber-200 bg-amber-50 text-amber-700",
+    COLD: "border-sky-200 bg-sky-50 text-sky-600",
+    gold: "border-violet-200 bg-violet-50 text-violet-700",
+    green: "border-emerald-200 bg-emerald-50 text-emerald-600",
+    slate: "border-slate-200 bg-white/80 text-slate-600",
+    blue: "border-cyan-200 bg-cyan-50 text-cyan-700",
+    purple: "border-violet-200 bg-violet-50 text-violet-700",
   };
-  return (
-    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${tones[tone] || tones.slate} ${className}`}>
-      {children}
-    </span>
-  );
+  return <span className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-semibold ${tones[tone] || tones.slate} ${className}`}>{children}</span>;
 }
 
 export function Modal({ open, onClose, title, children, className = "" }) {
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-fade-up ${className}`}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 sticky top-0 bg-white rounded-t-2xl">
-          <h3 className="font-heading font-bold text-lg text-slate-900">{title}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 text-xl leading-none" data-testid="modal-close">×</button>
+      <button aria-label="Close modal" className="absolute inset-0 bg-slate-950/35 backdrop-blur-md" onClick={onClose} />
+      <div className={`relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-[26px] border border-white/90 bg-white/95 shadow-[0_30px_100px_rgba(76,59,122,.22)] backdrop-blur-2xl animate-fade-up ${className}`}>
+        <div className="sticky top-0 z-10 flex items-center justify-between rounded-t-[26px] border-b border-violet-100/80 bg-white/94 px-6 py-4 backdrop-blur-xl">
+          <h3 className="font-heading text-lg font-extrabold text-slate-900">{title}</h3>
+          <button onClick={onClose} className="soft-round !h-8 !w-8 text-lg leading-none" data-testid="modal-close">×</button>
         </div>
         <div className="p-6">{children}</div>
       </div>
@@ -101,9 +77,9 @@ export function Modal({ open, onClose, title, children, className = "" }) {
 export function EmptyState({ icon: Icon, title, sub, action }) {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
-      {Icon && <div className="w-14 h-14 rounded-2xl bg-gold-50 flex items-center justify-center mb-4"><Icon className="w-7 h-7 text-gold-600" /></div>}
-      <h3 className="font-heading font-semibold text-slate-800">{title}</h3>
-      {sub && <p className="text-sm text-slate-500 mt-1 max-w-sm">{sub}</p>}
+      {Icon && <div className="soft-icon mb-4 !h-14 !w-14"><Icon className="h-7 w-7" /></div>}
+      <h3 className="font-heading font-extrabold text-slate-800">{title}</h3>
+      {sub && <p className="mt-1 max-w-sm text-sm leading-6 text-slate-500">{sub}</p>}
       {action && <div className="mt-4">{action}</div>}
     </div>
   );
