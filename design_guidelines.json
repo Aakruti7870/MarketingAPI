@@ -1,0 +1,214 @@
+{
+  "project_name": "GOLD-e",
+  "app_type": "hybrid_fullstack",
+  "archetype": "LUXURY_PROFESSIONAL_SAAS",
+  "theme": "Clean Light/Professional SaaS look with Gold accents & Optional Executive Dark Toggle",
+  "design_philosophy": {
+    "core_concept": "Executive Omnichannel Revenue Engine",
+    "vibe": "High-trust, ultra-refined, precise, revenue-driving. Combines Swiss structure with subtle liquid-gold metallic accents and crisp optical typography.",
+    "principles": [
+      "Gold as Signal, Not Slop: Use gold (#D4AF37 / #E5C158 / #C5A059) strictly for key interactions, high-value metrics, AI badges, and active focus states. 90% of the UI remains pristine crisp white and warm slate.",
+      "Density with Breathing Room: High data correlation for leads and pipeline, padded generously with p-6/p-8 containers and 1px crisp borders (border-slate-200/60).",
+      "AI Command Centricity: Every screen provides seamless access to the AI Assistant via Ctrl+K command bar and natural language prompts.",
+      "Multi-tenant Isolation: Workspace switcher, API credential vault cards, and tenant brand customization prominently visible."
+    ]
+  },
+  "colors": {
+    "primary_gold": {
+      "main": "#D4AF37",
+      "light": "#F7E7A1",
+      "hover": "#C5A059",
+      "dark": "#997A15",
+      "subtle_bg": "rgba(212, 175, 55, 0.08)",
+      "border": "rgba(212, 175, 55, 0.3)"
+    },
+    "metallic_gradients": {
+      "gold_badge": "linear-gradient(135deg, #F5D77F 0%, #D4AF37 50%, #B8860B 100%)",
+      "gold_glow": "0 4px 20px rgba(212, 175, 55, 0.25)",
+      "card_highlight": "linear-gradient(180deg, rgba(212, 175, 55, 0.05) 0%, rgba(255, 255, 255, 0) 100%)"
+    },
+    "neutrals_light": {
+      "bg_app": "#F8FAFC",
+      "bg_surface": "#FFFFFF",
+      "bg_muted": "#F1F5F9",
+      "border_default": "#E2E8F0",
+      "border_subtle": "#EDF2F7",
+      "text_primary": "#0F172A",
+      "text_secondary": "#475569",
+      "text_muted": "#94A3B8"
+    },
+    "sidebar_executive": {
+      "bg_sidebar": "#090D16",
+      "text_active": "#F5D77F",
+      "text_default": "#94A3B8",
+      "border": "#1E293B"
+    },
+    "status_badges": {
+      "hot_lead": {
+        "bg": "#FEF2F2",
+        "text": "#DC2626",
+        "border": "#FCA5A5",
+        "icon_color": "#EF4444"
+      },
+      "warm_lead": {
+        "bg": "#FEFCE8",
+        "text": "#CA8A04",
+        "border": "#FDE047",
+        "icon_color": "#EAB308"
+      },
+      "cold_lead": {
+        "bg": "#F0F9FF",
+        "text": "#0284C7",
+        "border": "#BAE6FD",
+        "icon_color": "#38BDF8"
+      },
+      "success": {
+        "bg": "#F0FDF4",
+        "text": "#16A34A",
+        "border": "#86EFAC"
+      }
+    }
+  },
+  "typography": {
+    "font_family_heading": "'Plus Jakarta Sans', 'Outfit', sans-serif",
+    "font_family_body": "'Inter', 'DM Sans', sans-serif",
+    "font_family_mono": "'JetBrains Mono', 'Fira Code', monospace",
+    "scale": {
+      "h1": "text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900",
+      "h2": "text-2xl sm:text-3xl font-bold tracking-tight text-slate-900",
+      "h3": "text-xl sm:text-2xl font-semibold text-slate-900",
+      "h4": "text-lg font-semibold text-slate-800",
+      "body": "text-sm sm:text-base text-slate-600 leading-relaxed",
+      "small": "text-xs font-medium text-slate-500",
+      "overline": "text-[11px] font-bold uppercase tracking-[0.18em] text-amber-700"
+    }
+  },
+  "spacing_and_layout": {
+    "container_padding": "p-6 sm:p-8 md:p-10",
+    "card_padding": "p-5 sm:p-6",
+    "grid_gap": "gap-5 sm:gap-6",
+    "border_radius": {
+      "card": "rounded-2xl",
+      "button": "rounded-xl",
+      "pill": "rounded-full",
+      "input": "rounded-xl"
+    },
+    "shadows": {
+      "card_soft": "0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)",
+      "card_hover": "0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(212, 175, 55, 0.12)",
+      "gold_glow_active": "0 0 15px rgba(212, 175, 55, 0.3)"
+    }
+  },
+  "key_modules_and_layouts": {
+    "navigation_sidebar": {
+      "type": "Executive Dual-Tone Left Sidebar",
+      "bg": "bg-[#090D16] text-slate-300",
+      "header": "Logo 'GOLD-e' with shimmering gold gradient icon badge and workspace selector dropdown.",
+      "nav_items": [
+        {"name": "Dashboard", "icon": "LayoutDashboard", "path": "/dashboard"},
+        {"name": "Lead Engine", "icon": "Users", "badge": "AI Scored", "path": "/leads"},
+        {"name": "Sales Pipeline", "icon": "Kanban", "path": "/pipeline"},
+        {"name": "Unified Inbox", "icon": "MessageSquare", "badge": "Omnichannel", "path": "/inbox"},
+        {"name": "Campaigns", "icon": "Send", "path": "/campaigns"},
+        {"name": "Templates", "icon": "FileText", "path": "/templates"},
+        {"name": "AI Studio", "icon": "Sparkles", "badge": "HOT", "path": "/ai-studio"},
+        {"name": "Automations", "icon": "Zap", "path": "/automations"},
+        {"name": "Quotations", "icon": "Receipt", "path": "/quotations"},
+        {"name": "API Vault", "icon": "KeyRound", "path": "/settings/api-vault"}
+      ],
+      "footer": "User profile pill, API usage bar (e.g. $14.20 / $50 OpenAI limit), Dark/Light toggle button."
+    },
+    "header_topbar": {
+      "height": "h-16",
+      "components": [
+        "Breadcrumbs with current active route",
+        "AI Command Bar Button ('Ctrl + K' shortcut trigger with glowing gold sparkles)",
+        "Quick Action Menu (+ New Lead, + Launch Campaign, + Draft Invoice)",
+        "Omnichannel Live Status Pill (Meta WhatsApp: Connected, SMTP: Ready, OpenAI: Active)",
+        "Tenant Workspace Picker ('Acme Corp - Enterprise Tier')"
+      ]
+    },
+    "dashboard_analytics": {
+      "kpi_grid": "4 cols (Total Revenue Generated, AI Hot Leads Converted, Omnichannel Message Volume, Avg Response Time)",
+      "charts_section": "2 cols (Lead Acquisition Trend - Area Chart with Gold Gradient Fill + Conversion Funnel & AI Usage Breakdown)",
+      "ai_cost_tracker": "Real-time OpenAI & Meta WhatsApp API cost meter with budget alert threshold."
+    },
+    "lead_engine": {
+      "view_modes": ["Table View", "Grid Cards", "CSV Import Modal"],
+      "columns": ["Lead Name & Avatar", "Company", "Channel (WhatsApp/Email/SMS)", "AI Score (HOT 92%, WARM 65%, COLD 24%)", "Stage", "Last Activity", "Actions"],
+      "filters": ["AI Score Filter", "Channel Filter", "Tags", "Owner"],
+      "contact_vault_privacy": "Toggle to mask sensitive phone numbers/emails for sub-users with RBAC permissions."
+    },
+    "sales_pipeline": {
+      "type": "Kanban Board Drag & Drop",
+      "stages": [
+        {"id": "new", "label": "NEW LEADS", "color": "border-slate-300"},
+        {"id": "contacted", "label": "CONTACTED", "color": "border-blue-400"},
+        {"id": "demo", "label": "DEMO SCHEDULED", "color": "border-amber-400"},
+        {"id": "proposal", "label": "PROPOSAL SENT", "color": "border-purple-400"},
+        {"id": "won", "label": "WON / CLOSED", "color": "border-emerald-500"}
+      ],
+      "card_details": "Lead Name, Deal Value ($), Channel Badge, AI Sentiment Score, One-click WhatsApp message trigger."
+    },
+    "unified_inbox": {
+      "layout": "3-Pane Layout (Thread List -> Active Chat Workspace -> Lead Detail Context Sidepanel)",
+      "features": [
+        "Channel Switcher Tabs (All, WhatsApp Meta, Email, SMS)",
+        "AI One-Click Reply Suggestions (Generate Close Deal Response, Follow-up, Objection Handling)",
+        "Template Insert Menu",
+        "Lead AI Summary Drawer"
+      ]
+    },
+    "ai_marketing_studio": {
+      "layout": "Prompt Bar & Creator Sidebar + Asset Grid Gallery",
+      "features": [
+        "Poster & Social Media Graphic Generator (Aspect ratio presets: 1:1 Instagram, 9:16 Story, 16:9 Banner)",
+        "AI Ad Caption Generator with Tone selection (Persuasive, Luxury, Urgency, Casual)",
+        "Sample Generated Creatives preview with instant export or Send to Campaign button"
+      ]
+    },
+    "ai_command_center": {
+      "type": "Global Floating Command Modal (Ctrl+K) & Inline AI Agent Panel",
+      "capabilities": [
+        "\"Find hot leads from last week and start a WhatsApp campaign\"",
+        "\"Generate a quote for Acme Corp for 500 licenses\"",
+        "\"Analyze WhatsApp reply rate for March\"",
+        "\"Check API costs for OpenAI this month\""
+      ]
+    },
+    "api_vault_settings": {
+      "cards": [
+        {"provider": "Meta WhatsApp Business API", "fields": ["Phone Number ID", "System User Token", "WABA ID"], "status": "Active"},
+        {"provider": "OpenAI / Claude API", "fields": ["API Key", "Model Selection (GPT-4o)"], "status": "Active"},
+        {"provider": "SMTP / Email Gateway", "fields": ["Host", "Port", "User", "Password"], "status": "Active"},
+        {"provider": "Twilio SMS", "fields": ["Account SID", "Auth Token", "Sender Number"], "status": "Connected"}
+      ]
+    }
+  },
+  "media_assets": {
+    "avatars": [
+      "https://images.unsplash.com/photo-1607746882042-944635dfe10e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTN8MHwxfHNlYXJjaHszfHxtb2Rlcm4lMjBidXNpbmVzcyUyMHByb2Zlc3Npb25hbCUyMHBvcnRyYWl0JTIwYXZhdGFyfGVufDB8fHx8MTc4ODc3NDkwN3ww&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1560250097-0b93528c311a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTN8MHwxfHNlYXJjaHxfHxtb2Rlcm4lMjBidXNpbmVzcyUyMHByb2Zlc3Npb25hbCUyMHBvcnRyYWl0JTIwYXZhdGFyfGVufDB8fHx8MTc4ODc3NDkwN3ww&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1676989880361-091e12efc056?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTN8MHwxfHNlYXJjaHw0fHxtb2Rlcm4lMjBidXNpbmVzcyUyMHByb2Zlc3Npb25hbCUyMHBvcnRyYWl0JTIwYXZhdGFyfGVufDB8fHx8MTc4ODc3NDkwN3ww&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1527980965255-d3b416303d12?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1OTN8MHwxfHNlYXJjaHwyfHxtb2Rlcm4lMjBidXNpbmVzcyUyMHByb2Zlc3Npb25hbCUyMHBvcnRyYWl0JTIwYXZhdGFyfGVufDB8fHx8MTc4ODc3NDkwN3ww&ixlib=rb-4.1.0&q=85"
+    ],
+    "marketing_creatives": [
+      "https://images.unsplash.com/photo-1631390573019-5b5deb1daf53?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHszfHxtYXJrZXRpbmclMjBwcm9kdWN0JTIwcG9zdGVyJTIwY3JlYXRpdmUlMjBtb2NrdXBzfGVufDB8fHx8MTc4ODc3NDkxNXww&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1575518599573-d9f3b7ec2632?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHwyfHxtYXJrZXRpbmclMjBwcm9kdWN0JTIwcG9zdGVyJTIwY3JlYXRpdmUlMjBtb2NrdXBzfGVufDB8fHx8MTc4ODc3NDkxNXww&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1787347185086-d8a1316febbd?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzR8MHwxfHNlYXJjaHw0fHxtYXJrZXRpbmclMjBwcm9kdWN0JTIwcG9zdGVyJTIwY3JlYXRpdmUlMjBtb2NrdXBzfGVufDB8fHx8MTc4ODc3NDkxNXww&ixlib=rb-4.1.0&q=85"
+    ],
+    "brand_logos": [
+      "https://images.unsplash.com/photo-1555274175-75f4056dfd05?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2MzR8MHwxfHNlYXJjaHxfH2NvbXBhbnklMjBicmFuZCUyMGxvZ29zJTIwbWluaW1hbCUyMGJsYWNrJTIwd2hpdGV8ZW58MHx8fHwxNzg4Nzc0OTE1fDA&ixlib=rb-4.1.0&q=85"
+    ]
+  },
+  "testing_and_accessibility": {
+    "data_testid_convention": "All interactive elements, inputs, buttons, tables, badges, and modals MUST include explicit data-testid attributes in kebab-case (e.g. data-testid=\"lead-score-hot-badge\", data-testid=\"ai-command-input\", data-testid=\"pipeline-card-drag-handle\").",
+    "contrast_standards": "All text elements meet WCAG AA / APCA standards. Accent text in gold (#B8860B or #997A15) on light backgrounds; #F5D77F on dark sidebar backgrounds."
+  },
+  "instructions_to_main_agent": {
+    "component_structure": "Use clean Modular React components with Tailwind CSS and Lucide Icons or Phosphor Icons.",
+    "state_management": "Include rich mock data and interactive React state so all tabs, Modals, Kanban drag/drop, AI generators, and Search filters work live for demo.",
+    "no_transparent_overlays": "Ensure dropdown menus, modals, and tooltips have solid backgrounds (bg-white or bg-slate-900 with shadow-2xl), NEVER fully transparent.",
+    "micro_interactions": "Add smooth hover transformations, active states, active tab indicator transitions, and toast notifications via sonner."
+  }
+}
