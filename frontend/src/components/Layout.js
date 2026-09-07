@@ -5,8 +5,8 @@ import api from "../api";
 import CommandCenter from "./CommandCenter";
 import {
   LayoutDashboard, Users, Kanban, MessageSquare, Send, FileText, Sparkles,
-  Zap, Receipt, KeyRound, LogOut, ChevronDown, ShieldCheck,
-  UsersRound, ShieldCheck as Shield, BarChart3, Code2, Phone, Gauge,
+  Zap, Receipt, KeyRound, LogOut, ChevronDown, ShieldCheck, Coins,
+  UsersRound, ShieldCheck as Shield, BarChart3, Code2, Phone, Gauge, CreditCard,
 } from "lucide-react";
 
 const NAV = [
@@ -26,6 +26,7 @@ const NAV = [
   { name: "Team", icon: UsersRound, path: "/team" },
   { name: "API Vault", icon: KeyRound, path: "/vault" },
   { name: "Workspace & Usage", icon: Gauge, path: "/workspace" },
+  { name: "Pricing", icon: CreditCard, path: "/pricing" },
 ];
 
 export default function Layout({ children }) {
@@ -58,9 +59,10 @@ export default function Layout({ children }) {
 
   const title = NAV.find((item) => location.pathname.startsWith(item.path))?.name || "GOLD-e";
   const providerCount = saas ? Object.values(saas.providers).filter((provider) => provider.configured).length : 0;
-  const messages = saas?.usage?.monthly_messages ?? 0;
-  const messageLimit = saas?.limits?.monthly_messages;
-  const usagePercent = saas?.utilization?.monthly_messages ?? 0;
+  const coinBalance = saas?.wallet?.coin_balance ?? 0;
+  const paidRefill = saas?.wallet?.paid_monthly_refill ?? 2000;
+  const plan = saas?.workspace?.plan || "Free";
+  const coinPercent = plan === "Pro" ? Math.min(100, (coinBalance / paidRefill) * 100) : Math.min(100, coinBalance);
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
@@ -104,13 +106,13 @@ export default function Layout({ children }) {
         </nav>
 
         <div className="p-3 border-t border-slate-800">
-          <button onClick={() => navigate("/workspace")} className="w-full text-left px-3 py-2 mb-2 rounded-lg hover:bg-slate-800/40">
+          <button onClick={() => navigate("/pricing")} className="w-full text-left px-3 py-2 mb-2 rounded-lg hover:bg-slate-800/40">
             <div className="flex items-center justify-between text-[10px] text-slate-500 mb-1">
-              <span>Messages this month</span>
-              <span className="font-mono">{messages} / {messageLimit == null ? "∞" : messageLimit}</span>
+              <span className="flex items-center gap-1"><Coins className="w-3 h-3" /> Coins</span>
+              <span className="font-mono">{coinBalance.toLocaleString()} remaining</span>
             </div>
             <div className="h-1.5 rounded-full bg-slate-800 overflow-hidden">
-              <div className="h-full gold-gradient" style={{ width: `${messageLimit == null ? 0 : Math.max(2, usagePercent)}%` }} />
+              <div className="h-full gold-gradient" style={{ width: `${Math.max(2, coinPercent)}%` }} />
             </div>
           </button>
           <div className="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-slate-800/40">
