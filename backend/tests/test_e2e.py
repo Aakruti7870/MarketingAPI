@@ -271,3 +271,37 @@ def test_developer_api_key_scope_and_usage():
 def test_scheduler_requires_credential():
     response = requests.post(f"{API}/autopilot/internal/run", timeout=20)
     assert response.status_code == 401
+
+
+def test_authenticated_data_deletion_request_is_idempotent():
+    owner = register_workspace("privacy")
+    token = owner["token"]
+
+    initial = requests.get(f"{API}/privacy/deletion-request", headers=headers(token), timeout=10)
+    assert initial.status_code == 200, initial.text
+    assert initial.json()["requested"] is False
+
+    first = requests.post(
+        f"{API}/privacy/deletion-request",
+        headers=headers(token),
+        json={"reason": "E2E privacy request"},
+        timeout=10,
+    )
+    assert first.status_code == 202, first.text
+    request = first.json()
+    assert request["requested"] is True
+    assert request["status"] == "pending"
+    assert request["scope"] == "workspace_and_account"
+
+    duplicate = requests.post(
+        f"{API}/privacy/deletion-request",
+        headers=headers(token),
+        json={},
+        timeout=10,
+    )
+    assert duplicate.status_code == 202, duplicate.text
+    assert duplicate.json()["id"] == request["id"]
+
+    status = requests.get(f"{API}/privacy/deletion-request", headers=headers(token), timeout=10)
+    assert status.status_code == 200, status.text
+    assert status.json()["id"] == request["id"]

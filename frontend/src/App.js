@@ -1,8 +1,9 @@
 import React from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Layout from "./components/Layout";
+import PrivacyRequestCard from "./components/PrivacyRequestCard";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Assistant from "./pages/Assistant";
@@ -24,6 +25,7 @@ import Developer from "./pages/Developer";
 import WhatsApp from "./pages/WhatsApp";
 import Workspace from "./pages/Workspace";
 import Pricing from "./pages/Pricing";
+import { PrivacyPolicy, TermsOfService, DataDeletion } from "./pages/LegalPages";
 
 function Protected({ children }) {
   const { user } = useAuth();
@@ -38,22 +40,45 @@ function GuestOnly({ children }) {
   return children;
 }
 
+function PublicLegalLinks() {
+  return (
+    <div className="border-t border-slate-200/70 bg-white px-5 py-3 text-center text-[11px] font-semibold text-slate-500">
+      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-5 gap-y-2">
+        <Link to="/privacy" className="hover:text-violet-700">Privacy Policy</Link>
+        <Link to="/terms" className="hover:text-violet-700">Terms of Service</Link>
+        <Link to="/data-deletion" className="hover:text-violet-700">Data Deletion</Link>
+      </div>
+    </div>
+  );
+}
+
+function PublicPage({ children }) {
+  return <>{children}<PublicLegalLinks /></>;
+}
+
+function SettingsWithPrivacy() {
+  return <><SettingsPage /><PrivacyRequestCard /></>;
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Toaster position="top-right" richColors />
         <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="/login" element={<GuestOnly><Auth /></GuestOnly>} />
+          <Route path="/" element={<PublicPage><Landing /></PublicPage>} />
+          <Route path="/pricing" element={<PublicPage><Pricing /></PublicPage>} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/data-deletion" element={<DataDeletion />} />
+          <Route path="/login" element={<GuestOnly><PublicPage><Auth /></PublicPage></GuestOnly>} />
 
           <Route path="/assistant" element={<Protected><Assistant /></Protected>} />
           <Route path="/explore" element={<Protected><ExplorePage /></Protected>} />
           <Route path="/use-cases" element={<Protected><UseCasesPage /></Protected>} />
           <Route path="/files" element={<Protected><FilesPage /></Protected>} />
           <Route path="/history" element={<Protected><HistoryPage /></Protected>} />
-          <Route path="/settings" element={<Protected><SettingsPage /></Protected>} />
+          <Route path="/settings" element={<Protected><SettingsWithPrivacy /></Protected>} />
 
           <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
           <Route path="/leads" element={<Protected><Leads /></Protected>} />
