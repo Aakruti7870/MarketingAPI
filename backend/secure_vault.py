@@ -6,7 +6,7 @@ as masked representations and are never decrypted into API responses.
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 
-from core import audit, db, decrypt_str, encrypt_str, get_current_user, now_iso, oid, require_role
+from core import audit, db, decrypt_str, encrypt_str, now_iso, oid, require_role
 
 router = APIRouter(prefix="/api/vault")
 
@@ -26,7 +26,7 @@ def _mask(value: str) -> str:
 
 
 @router.get("")
-async def list_credentials(user: dict = Depends(get_current_user)):
+async def list_credentials(user: dict = Depends(require_role("owner", "admin"))):
     rows = await db.credentials.find({"workspace_id": user["workspace_id"]}).sort("created_at", -1).to_list(100)
     output = []
     for row in rows:
