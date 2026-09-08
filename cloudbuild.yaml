@@ -68,7 +68,7 @@ steps:
             --schedule '*/5 * * * *' \
             --uri "$${SERVICE_URL}/api/autopilot/internal/run" \
             --http-method POST \
-            --headers "X-Cron-Secret=$$CRON_SECRET"
+            --update-headers "X-Cron-Secret=$$CRON_SECRET"
         else
           gcloud scheduler jobs create http '${_SCHEDULER_JOB}' \
             --location '${_REGION}' \
