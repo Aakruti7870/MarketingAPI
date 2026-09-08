@@ -98,7 +98,6 @@ export default function Assistant() {
       })
       .finally(() => active && setLoadingThread(false));
     return () => { active = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestedThread]);
 
   useEffect(() => {
@@ -106,7 +105,6 @@ export default function Assistant() {
     if (promptHandled.current === starterPrompt) return;
     promptHandled.current = starterPrompt;
     submit(starterPrompt);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [starterPrompt, requestedThread, loadingThread]);
 
   const newChat = () => {
