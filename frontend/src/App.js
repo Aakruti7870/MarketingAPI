@@ -16,6 +16,7 @@ import Campaigns from "./pages/Campaigns";
 import Templates from "./pages/Templates";
 import AIStudio from "./pages/AIStudio";
 import Automations from "./pages/Automations";
+import Flows from "./pages/Flows";
 import Quotations from "./pages/Quotations";
 import Team from "./pages/Team";
 import Vault from "./pages/Vault";
@@ -88,6 +89,7 @@ export default function App() {
           <Route path="/templates" element={<Protected><Templates /></Protected>} />
           <Route path="/ai-studio" element={<Protected><AIStudio /></Protected>} />
           <Route path="/automations" element={<Protected><Automations /></Protected>} />
+          <Route path="/flows" element={<Protected><Flows /></Protected>} />
           <Route path="/quotations" element={<Protected><Quotations /></Protected>} />
           <Route path="/consent" element={<Protected><Consent /></Protected>} />
           <Route path="/analytics" element={<Protected><Analytics /></Protected>} />
