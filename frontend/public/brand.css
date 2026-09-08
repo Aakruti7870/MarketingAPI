@@ -1,0 +1,45 @@
+/* GOLD-e AI official logo integration — supplied brand artwork */
+:root {
+  --gold-e-logo-image: url('/gold-e-ai-logo.jpg');
+}
+
+/* Replace only the temporary sparkle glyph used as a square brand mark. */
+.brand-gradient.h-9.w-9:has(> svg.lucide-sparkles),
+.brand-gradient.h-10.w-10:has(> svg.lucide-sparkles),
+.brand-gradient.h-11.w-11:has(> svg.lucide-sparkles) {
+  background-color: rgba(255, 255, 255, 0.96) !important;
+  background-image: var(--gold-e-logo-image) !important;
+  background-repeat: no-repeat !important;
+  background-position: 27% 42% !important;
+  background-size: 178% 178% !important;
+  border: 1px solid rgba(139, 92, 246, 0.16);
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.14) !important;
+  overflow: hidden;
+}
+
+.brand-gradient.h-9.w-9:has(> svg.lucide-sparkles) > svg,
+.brand-gradient.h-10.w-10:has(> svg.lucide-sparkles) > svg,
+.brand-gradient.h-11.w-11:has(> svg.lucide-sparkles) > svg {
+  opacity: 0 !important;
+}
+
+/* The full supplied lockup is shown only where its square dimensions stay legible. */
+.landing-shell section#home > .relative.mx-auto.max-w-5xl.text-center::before {
+  content: '';
+  display: block;
+  width: clamp(136px, 16vw, 176px);
+  aspect-ratio: 1 / 1;
+  margin: 0 auto 14px;
+  background: rgba(255, 255, 255, 0.74) var(--gold-e-logo-image) center / contain no-repeat;
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  border-radius: 32px;
+  box-shadow: 0 24px 70px rgba(103, 58, 183, 0.13);
+}
+
+@media (max-width: 640px) {
+  .landing-shell section#home > .relative.mx-auto.max-w-5xl.text-center::before {
+    width: 136px;
+    margin-bottom: 10px;
+    border-radius: 26px;
+  }
+}
