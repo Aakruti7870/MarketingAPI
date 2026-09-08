@@ -1,8 +1,8 @@
-"""GOLD-e Flow Engine.
+"""GOLD-e multi-channel Flow Engine.
 
-The internal flow definition is channel-neutral. Web/support-widget renderers use it
-now; a WhatsApp Flow adapter can compile compatible published versions later without
-making Meta's JSON format the source of truth.
+GOLD-e owns a channel-neutral flow schema. Web/support-widget renderers consume the
+schema directly; a Meta WhatsApp Flow adapter can compile compatible published
+versions later without making Meta JSON the source of truth.
 """
 import re
 from copy import deepcopy
@@ -19,7 +19,9 @@ SUPPORTED_CHANNELS = {"web", "support_widget", "whatsapp"}
 SUPPORTED_FIELD_TYPES = {
     "text", "textarea", "select", "radio", "checkbox", "number", "email", "phone", "date"
 }
-FORBIDDEN_FIELD_RE = re.compile(r"password|passcode|otp|token|secret|api[_ -]?key|access[_ -]?key", re.I)
+FORBIDDEN_FIELD_RE = re.compile(
+    r"password|passcode|otp|token|secret|api[_ -]?key|access[_ -]?key", re.I
+)
 ID_RE = re.compile(r"^[a-z][a-z0-9_-]{0,63}$")
 
 
@@ -41,7 +43,7 @@ class FlowUpdateIn(BaseModel):
 
 class SessionStartIn(BaseModel):
     channel: str = "web"
-    mode: str = "live"  # live | preview
+    mode: str = "live"
 
 
 class SessionSubmitIn(BaseModel):
@@ -56,10 +58,7 @@ SUPPORT_DEFINITION = {
             "title": "How can GOLD-e AI help?",
             "body": "Choose the area that best matches your issue.",
             "fields": [{
-                "name": "issue",
-                "type": "select",
-                "label": "Support area",
-                "required": True,
+                "name": "issue", "type": "select", "label": "Support area", "required": True,
                 "options": [
                     {"label": "CSV / XLSX Import", "value": "csv_import"},
                     {"label": "WhatsApp Connection", "value": "whatsapp"},
@@ -79,8 +78,7 @@ SUPPORT_DEFINITION = {
             ],
         },
         {
-            "id": "csv_import",
-            "title": "Import diagnostic",
+            "id": "csv_import", "title": "Import diagnostic",
             "body": "Tell us what happened. Never include passwords, OTPs or API secrets.",
             "fields": [
                 {"name": "import_problem", "type": "select", "label": "Problem", "required": True,
@@ -92,28 +90,28 @@ SUPPORT_DEFINITION = {
                      {"label": "Invalid country code", "value": "country_code"},
                      {"label": "Other", "value": "other"},
                  ]},
-                {"name": "country", "type": "text", "label": "Country / calling code", "required": False},
-                {"name": "details", "type": "textarea", "label": "What did you expect?", "required": False},
+                {"name": "country", "type": "text", "label": "Country / calling code"},
+                {"name": "details", "type": "textarea", "label": "What did you expect?"},
             ],
             "terminal": True,
         },
         {
-            "id": "whatsapp",
-            "title": "WhatsApp diagnostic",
+            "id": "whatsapp", "title": "WhatsApp diagnostic",
             "body": "Choose the stage that is blocked. Do not paste Meta tokens or App Secrets.",
-            "fields": [{"name": "whatsapp_stage", "type": "select", "label": "Blocked stage", "required": True,
-                        "options": [
-                            {"label": "Phone verification", "value": "phone_verification"},
-                            {"label": "Webhook", "value": "webhook"},
-                            {"label": "Message sending", "value": "sending"},
-                            {"label": "Template approval", "value": "template"},
-                            {"label": "Other", "value": "other"},
-                        ]}],
+            "fields": [{
+                "name": "whatsapp_stage", "type": "select", "label": "Blocked stage", "required": True,
+                "options": [
+                    {"label": "Phone verification", "value": "phone_verification"},
+                    {"label": "Webhook", "value": "webhook"},
+                    {"label": "Message sending", "value": "sending"},
+                    {"label": "Template approval", "value": "template"},
+                    {"label": "Other", "value": "other"},
+                ],
+            }],
             "terminal": True,
         },
         {
-            "id": "campaign",
-            "title": "Campaign diagnostic",
+            "id": "campaign", "title": "Campaign diagnostic",
             "body": "Describe the campaign problem so GOLD-e can route it correctly.",
             "fields": [
                 {"name": "campaign_problem", "type": "select", "label": "Problem", "required": True,
@@ -123,25 +121,25 @@ SUPPORT_DEFINITION = {
                      {"label": "Scheduled campaign did not run", "value": "schedule"},
                      {"label": "Messages failed", "value": "failed"},
                  ]},
-                {"name": "details", "type": "textarea", "label": "Additional details", "required": False},
+                {"name": "details", "type": "textarea", "label": "Additional details"},
             ],
             "terminal": True,
         },
         {
-            "id": "billing",
-            "title": "Billing and coins",
+            "id": "billing", "title": "Billing and coins",
             "body": "Choose the billing issue. GOLD-e support never needs your card details.",
-            "fields": [{"name": "billing_problem", "type": "select", "label": "Issue", "required": True,
-                        "options": [
-                            {"label": "Coin balance", "value": "coins"},
-                            {"label": "Plan / upgrade", "value": "plan"},
-                            {"label": "Payment status", "value": "payment"},
-                        ]}],
+            "fields": [{
+                "name": "billing_problem", "type": "select", "label": "Issue", "required": True,
+                "options": [
+                    {"label": "Coin balance", "value": "coins"},
+                    {"label": "Plan / upgrade", "value": "plan"},
+                    {"label": "Payment status", "value": "payment"},
+                ],
+            }],
             "terminal": True,
         },
         {
-            "id": "bug",
-            "title": "Report a bug",
+            "id": "bug", "title": "Report a bug",
             "body": "Give us reproducible details without including credentials or personal secrets.",
             "fields": [
                 {"name": "module", "type": "text", "label": "Module / page", "required": True},
@@ -157,8 +155,7 @@ SUPPORT_DEFINITION = {
             "terminal": True,
         },
         {
-            "id": "human",
-            "title": "Human support handoff",
+            "id": "human", "title": "Human support handoff",
             "body": "Add a short summary. GOLD-e will keep the flow context with the support request.",
             "fields": [{"name": "summary", "type": "textarea", "label": "Summary", "required": True}],
             "terminal": True,
@@ -169,17 +166,23 @@ SUPPORT_DEFINITION = {
 LEAD_DEFINITION = {
     "entry_screen": "need",
     "screens": [
-        {"id": "need", "title": "Tell us what you need", "body": "A short qualification flow.",
-         "fields": [
-             {"name": "requirement", "type": "textarea", "label": "Requirement", "required": True},
-             {"name": "budget", "type": "text", "label": "Budget", "required": False},
-         ], "next_screen": "contact"},
-        {"id": "contact", "title": "Contact details", "body": "Where should the team follow up?",
-         "fields": [
-             {"name": "name", "type": "text", "label": "Name", "required": True},
-             {"name": "phone", "type": "phone", "label": "Phone", "required": True},
-             {"name": "email", "type": "email", "label": "Email", "required": False},
-         ], "terminal": True},
+        {
+            "id": "need", "title": "Tell us what you need", "body": "A short qualification flow.",
+            "fields": [
+                {"name": "requirement", "type": "textarea", "label": "Requirement", "required": True},
+                {"name": "budget", "type": "text", "label": "Budget"},
+            ],
+            "next_screen": "contact",
+        },
+        {
+            "id": "contact", "title": "Contact details", "body": "Where should the team follow up?",
+            "fields": [
+                {"name": "name", "type": "text", "label": "Name", "required": True},
+                {"name": "phone", "type": "phone", "label": "Phone", "required": True},
+                {"name": "email", "type": "email", "label": "Email"},
+            ],
+            "terminal": True,
+        },
     ],
 }
 
@@ -190,8 +193,9 @@ SURVEY_DEFINITION = {
         "fields": [
             {"name": "rating", "type": "radio", "label": "Rating", "required": True,
              "options": [{"label": str(value), "value": str(value)} for value in range(1, 6)]},
-            {"name": "feedback", "type": "textarea", "label": "Comments", "required": False},
-        ], "terminal": True,
+            {"name": "feedback", "type": "textarea", "label": "Comments"},
+        ],
+        "terminal": True,
     }],
 }
 
@@ -212,6 +216,14 @@ BUILTIN_TEMPLATES = {
         "channels": ["web", "support_widget", "whatsapp"], "definition": SURVEY_DEFINITION,
     },
 }
+
+
+def _optional_id(value: Any) -> Optional[str]:
+    """Normalize a nullable target without ever converting None into the string 'none'."""
+    if value is None:
+        return None
+    normalized = str(value).strip().lower()
+    return normalized or None
 
 
 def _validate_channels(channels: list[str]) -> list[str]:
@@ -249,10 +261,11 @@ def _normalize_definition(definition: dict[str, Any]) -> dict[str, Any]:
         ids.add(screen_id)
 
         fields = []
+        field_names = set()
         raw_fields = raw.get("fields") or []
         if not isinstance(raw_fields, list) or len(raw_fields) > 30:
             raise HTTPException(422, detail=f"Screen {screen_id} has invalid fields")
-        field_names = set()
+
         for item in raw_fields:
             if not isinstance(item, dict):
                 raise HTTPException(422, detail=f"Screen {screen_id} contains an invalid field")
@@ -265,6 +278,7 @@ def _normalize_definition(definition: dict[str, Any]) -> dict[str, Any]:
             if field_type not in SUPPORTED_FIELD_TYPES:
                 raise HTTPException(422, detail=f"Unsupported field type: {field_type}")
             field_names.add(name)
+
             options = []
             for option in item.get("options") or []:
                 if isinstance(option, dict):
@@ -274,6 +288,7 @@ def _normalize_definition(definition: dict[str, Any]) -> dict[str, Any]:
                     label = value = str(option).strip()[:120]
                 if value:
                     options.append({"label": label or value, "value": value})
+
             fields.append({
                 "name": name,
                 "type": field_type,
@@ -287,10 +302,11 @@ def _normalize_definition(definition: dict[str, Any]) -> dict[str, Any]:
         for branch in raw.get("branches") or []:
             if not isinstance(branch, dict):
                 continue
+            branch_target = _optional_id(branch.get("next_screen"))
             branches.append({
                 "field": str(branch.get("field", "")).strip().lower(),
                 "equals": branch.get("equals"),
-                "next_screen": str(branch.get("next_screen", "")).strip().lower(),
+                "next_screen": branch_target,
             })
 
         screens.append({
@@ -299,11 +315,11 @@ def _normalize_definition(definition: dict[str, Any]) -> dict[str, Any]:
             "body": str(raw.get("body", ""))[:1200],
             "fields": fields,
             "branches": branches,
-            "next_screen": str(raw.get("next_screen", "")).strip().lower() or None,
+            "next_screen": _optional_id(raw.get("next_screen")),
             "terminal": bool(raw.get("terminal", False)),
         })
 
-    entry = str(definition.get("entry_screen", screens[0]["id"])).strip().lower()
+    entry = _optional_id(definition.get("entry_screen")) or screens[0]["id"]
     if entry not in ids:
         raise HTTPException(422, detail="Entry screen does not exist")
 
@@ -311,10 +327,11 @@ def _normalize_definition(definition: dict[str, Any]) -> dict[str, Any]:
         target = screen.get("next_screen")
         if target and target not in ids:
             raise HTTPException(422, detail=f"Screen {screen['id']} points to missing screen {target}")
+        local_fields = {field["name"] for field in screen["fields"]}
         for branch in screen.get("branches", []):
-            if branch["field"] not in {field["name"] for field in screen["fields"]}:
+            if branch["field"] not in local_fields:
                 raise HTTPException(422, detail=f"Branch on {screen['id']} references a missing field")
-            if branch["next_screen"] not in ids:
+            if not branch.get("next_screen") or branch["next_screen"] not in ids:
                 raise HTTPException(422, detail=f"Branch on {screen['id']} points to a missing screen")
 
     return {"entry_screen": entry, "screens": screens}
@@ -358,6 +375,7 @@ def _validate_answers(screen: dict, answers: dict[str, Any]) -> dict[str, Any]:
             continue
         if value is None or value == "":
             continue
+
         field_type = field["type"]
         if field_type in {"select", "radio"}:
             allowed = {str(option["value"]) for option in field.get("options", [])}
@@ -372,16 +390,16 @@ def _validate_answers(screen: dict, answers: dict[str, Any]) -> dict[str, Any]:
             except (TypeError, ValueError):
                 errors[name] = "Enter a valid number"
                 continue
-        elif field_type == "email":
-            if not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", str(value)):
-                errors[name] = "Enter a valid email address"
-                continue
+        elif field_type == "email" and not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", str(value)):
+            errors[name] = "Enter a valid email address"
+            continue
         elif field_type == "phone":
             digits = re.sub(r"\D", "", str(value))
             if len(digits) < 7 or len(digits) > 15:
                 errors[name] = "Enter a valid phone number"
                 continue
         cleaned[name] = value
+
     if errors:
         raise HTTPException(status_code=422, detail={"code": "flow_validation", "fields": errors})
     return cleaned
@@ -398,7 +416,10 @@ def _next_screen(screen: dict, answers: dict[str, Any]) -> Optional[str]:
 
 @router.get("/templates")
 async def templates(user: dict = Depends(get_current_user)):
-    return [{key: value for key, value in template.items() if key != "definition"} for template in BUILTIN_TEMPLATES.values()]
+    return [
+        {key: value for key, value in template.items() if key != "definition"}
+        for template in BUILTIN_TEMPLATES.values()
+    ]
 
 
 @router.post("/from-template/{template_key}")
@@ -452,8 +473,13 @@ async def get_flow(flow_id: str, user: dict = Depends(get_current_user)):
     if not flow:
         raise HTTPException(404, detail="Flow not found")
     result = _public_flow(flow, include_definition=True)
-    versions = await db.flow_versions.find({"flow_id": flow_id, "workspace_id": user["workspace_id"]}).sort("version", -1).to_list(50)
-    result["versions"] = [{"version": row["version"], "published_at": row.get("published_at"), "published_by": row.get("published_by")} for row in versions]
+    versions = await db.flow_versions.find(
+        {"flow_id": flow_id, "workspace_id": user["workspace_id"]}
+    ).sort("version", -1).to_list(50)
+    result["versions"] = [
+        {"version": row["version"], "published_at": row.get("published_at"), "published_by": row.get("published_by")}
+        for row in versions
+    ]
     return result
 
 
@@ -475,7 +501,9 @@ async def update_flow(flow_id: str, body: FlowUpdateIn, user: dict = Depends(get
         updates["draft_definition"] = _normalize_definition(body.definition)
     if flow.get("published_version"):
         updates["status"] = "published_with_draft"
-    await db.flows.update_one({"id": flow_id, "workspace_id": user["workspace_id"]}, {"$set": updates})
+    await db.flows.update_one(
+        {"id": flow_id, "workspace_id": user["workspace_id"]}, {"$set": updates}
+    )
     await audit(user["workspace_id"], user.get("name", "user"), "flow.updated", "flow", {"flow_id": flow_id})
     fresh = await db.flows.find_one({"id": flow_id, "workspace_id": user["workspace_id"]})
     return _public_flow(fresh, include_definition=True)
@@ -489,16 +517,28 @@ async def publish_flow(flow_id: str, user: dict = Depends(require_role("owner", 
     definition = _normalize_definition(flow.get("draft_definition") or {})
     version = int(flow.get("published_version") or 0) + 1
     version_doc = {
-        "id": oid(), "workspace_id": user["workspace_id"], "flow_id": flow_id,
-        "version": version, "definition": definition,
-        "published_by": user.get("name", "user"), "published_at": now_iso(),
+        "id": oid(),
+        "workspace_id": user["workspace_id"],
+        "flow_id": flow_id,
+        "version": version,
+        "definition": definition,
+        "published_by": user.get("name", "user"),
+        "published_at": now_iso(),
     }
     await db.flow_versions.insert_one(version_doc)
     await db.flows.update_one(
         {"id": flow_id, "workspace_id": user["workspace_id"]},
-        {"$set": {"published_version": version, "status": "published", "published_at": now_iso(), "updated_at": now_iso()}},
+        {"$set": {
+            "published_version": version,
+            "status": "published",
+            "published_at": now_iso(),
+            "updated_at": now_iso(),
+        }},
     )
-    await audit(user["workspace_id"], user.get("name", "user"), "flow.published", "flow", {"flow_id": flow_id, "version": version})
+    await audit(
+        user["workspace_id"], user.get("name", "user"), "flow.published", "flow",
+        {"flow_id": flow_id, "version": version},
+    )
     return {"ok": True, "flow_id": flow_id, "version": version, "status": "published"}
 
 
@@ -507,7 +547,9 @@ async def delete_flow(flow_id: str, user: dict = Depends(require_role("owner", "
     flow = await db.flows.find_one({"id": flow_id, "workspace_id": user["workspace_id"]})
     if not flow:
         raise HTTPException(404, detail="Flow not found")
-    active = await db.flow_sessions.count_documents({"flow_id": flow_id, "workspace_id": user["workspace_id"], "status": "active"})
+    active = await db.flow_sessions.count_documents({
+        "flow_id": flow_id, "workspace_id": user["workspace_id"], "status": "active"
+    })
     if active:
         raise HTTPException(409, detail="Flow has active sessions and cannot be deleted")
     await db.flows.delete_one({"id": flow_id, "workspace_id": user["workspace_id"]})
@@ -535,7 +577,9 @@ async def start_session(flow_id: str, body: SessionStartIn, user: dict = Depends
         if not version:
             raise HTTPException(400, detail="Publish this flow before starting a live session")
         version_doc = await db.flow_versions.find_one({
-            "flow_id": flow_id, "workspace_id": user["workspace_id"], "version": version,
+            "flow_id": flow_id,
+            "workspace_id": user["workspace_id"],
+            "version": version,
         })
         if not version_doc:
             raise HTTPException(500, detail="Published flow version is unavailable")
@@ -544,10 +588,19 @@ async def start_session(flow_id: str, body: SessionStartIn, user: dict = Depends
     session_id = oid()
     entry = definition["entry_screen"]
     session = {
-        "id": session_id, "workspace_id": user["workspace_id"], "flow_id": flow_id,
-        "flow_name": flow.get("name"), "version": version, "mode": body.mode, "channel": channel,
-        "user_id": user.get("id"), "status": "active", "current_screen": entry,
-        "data": {}, "started_at": now_iso(), "updated_at": now_iso(),
+        "id": session_id,
+        "workspace_id": user["workspace_id"],
+        "flow_id": flow_id,
+        "flow_name": flow.get("name"),
+        "version": version,
+        "mode": body.mode,
+        "channel": channel,
+        "user_id": user.get("id"),
+        "status": "active",
+        "current_screen": entry,
+        "data": {},
+        "started_at": now_iso(),
+        "updated_at": now_iso(),
     }
     await db.flow_sessions.insert_one(dict(session))
     await db.flow_events.insert_one({
@@ -559,12 +612,16 @@ async def start_session(flow_id: str, body: SessionStartIn, user: dict = Depends
 
 async def _session_definition(session: dict) -> dict:
     if session.get("mode") == "preview":
-        flow = await db.flows.find_one({"id": session["flow_id"], "workspace_id": session["workspace_id"]})
+        flow = await db.flows.find_one({
+            "id": session["flow_id"], "workspace_id": session["workspace_id"]
+        })
         if not flow:
             raise HTTPException(404, detail="Flow not found")
         return _normalize_definition(flow.get("draft_definition") or {})
     version_doc = await db.flow_versions.find_one({
-        "flow_id": session["flow_id"], "workspace_id": session["workspace_id"], "version": session["version"],
+        "flow_id": session["flow_id"],
+        "workspace_id": session["workspace_id"],
+        "version": session["version"],
     })
     if not version_doc:
         raise HTTPException(500, detail="Flow version is unavailable")
@@ -573,7 +630,11 @@ async def _session_definition(session: dict) -> dict:
 
 @router.get("/sessions/{session_id}")
 async def get_session(session_id: str, user: dict = Depends(get_current_user)):
-    session = await db.flow_sessions.find_one({"id": session_id, "workspace_id": user["workspace_id"], "user_id": user.get("id")})
+    session = await db.flow_sessions.find_one({
+        "id": session_id,
+        "workspace_id": user["workspace_id"],
+        "user_id": user.get("id"),
+    })
     if not session:
         raise HTTPException(404, detail="Flow session not found")
     definition = await _session_definition(session)
@@ -583,11 +644,16 @@ async def get_session(session_id: str, user: dict = Depends(get_current_user)):
 
 @router.post("/sessions/{session_id}/submit")
 async def submit_session(session_id: str, body: SessionSubmitIn, user: dict = Depends(get_current_user)):
-    session = await db.flow_sessions.find_one({"id": session_id, "workspace_id": user["workspace_id"], "user_id": user.get("id")})
+    session = await db.flow_sessions.find_one({
+        "id": session_id,
+        "workspace_id": user["workspace_id"],
+        "user_id": user.get("id"),
+    })
     if not session:
         raise HTTPException(404, detail="Flow session not found")
     if session.get("status") != "active":
         raise HTTPException(409, detail="Flow session is already closed")
+
     definition = await _session_definition(session)
     current = _screen(definition, session["current_screen"])
     answers = _validate_answers(current, body.answers)
@@ -599,28 +665,55 @@ async def submit_session(session_id: str, body: SessionSubmitIn, user: dict = De
         update = {"data": merged, "current_screen": next_screen, "updated_at": now_iso()}
         status = "active"
     else:
-        update = {"data": merged, "status": "completed", "completed_at": now_iso(), "updated_at": now_iso()}
+        update = {
+            "data": merged,
+            "status": "completed",
+            "completed_at": now_iso(),
+            "updated_at": now_iso(),
+        }
         status = "completed"
 
     claim = await db.flow_sessions.update_one(
-        {"id": session_id, "workspace_id": user["workspace_id"], "user_id": user.get("id"), "status": "active", "current_screen": current["id"]},
+        {
+            "id": session_id,
+            "workspace_id": user["workspace_id"],
+            "user_id": user.get("id"),
+            "status": "active",
+            "current_screen": current["id"],
+        },
         {"$set": update},
     )
     if claim.modified_count != 1:
         raise HTTPException(409, detail="Flow session changed; reload before continuing")
+
     await db.flow_events.insert_one({
-        "id": oid(), "workspace_id": user["workspace_id"], "flow_id": session["flow_id"],
-        "session_id": session_id, "event": "completed" if status == "completed" else "advanced",
-        "screen_id": current["id"], "next_screen": next_screen, "created_at": now_iso(),
+        "id": oid(),
+        "workspace_id": user["workspace_id"],
+        "flow_id": session["flow_id"],
+        "session_id": session_id,
+        "event": "completed" if status == "completed" else "advanced",
+        "screen_id": current["id"],
+        "next_screen": next_screen,
+        "created_at": now_iso(),
     })
-    fresh = await db.flow_sessions.find_one({"id": session_id, "workspace_id": user["workspace_id"]})
-    return {"session": clean(fresh), "screen": _screen(definition, next_screen) if next_screen else None}
+    fresh = await db.flow_sessions.find_one({
+        "id": session_id, "workspace_id": user["workspace_id"]
+    })
+    return {
+        "session": clean(fresh),
+        "screen": _screen(definition, next_screen) if next_screen else None,
+    }
 
 
 @router.post("/sessions/{session_id}/cancel")
 async def cancel_session(session_id: str, user: dict = Depends(get_current_user)):
     result = await db.flow_sessions.update_one(
-        {"id": session_id, "workspace_id": user["workspace_id"], "user_id": user.get("id"), "status": "active"},
+        {
+            "id": session_id,
+            "workspace_id": user["workspace_id"],
+            "user_id": user.get("id"),
+            "status": "active",
+        },
         {"$set": {"status": "cancelled", "cancelled_at": now_iso(), "updated_at": now_iso()}},
     )
     if not result.modified_count:
@@ -640,7 +733,11 @@ async def flow_analytics(flow_id: str, user: dict = Depends(get_current_user)):
     active = await db.flow_sessions.count_documents({**query, "status": "active"})
     completion_rate = round(completed / started * 100, 1) if started else 0.0
     return {
-        "flow_id": flow_id, "name": flow["name"],
-        "started": started, "completed": completed, "cancelled": cancelled, "active": active,
+        "flow_id": flow_id,
+        "name": flow["name"],
+        "started": started,
+        "completed": completed,
+        "cancelled": cancelled,
+        "active": active,
         "completion_rate": completion_rate,
     }
