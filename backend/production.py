@@ -23,8 +23,11 @@ if not os.environ.get("VAULT_KEY"):
     os.environ["VAULT_KEY"] = base64.urlsafe_b64encode(digest).decode()
 
 import billing
+import contacts
 import core
+import flows
 import privacy
+import production_ai
 import saas
 import secure_team
 import secure_vault
@@ -55,12 +58,21 @@ _remove_route("/api/dashboard", {"GET"})
 _remove_route("/api/audit", {"GET"})
 _remove_route("/api/campaigns", {"POST"})
 _remove_route("/api/consent/opt-outs", {"GET"})
+_remove_route("/api/ai/generate", {"POST"})
+_remove_route("/api/ai/marketing", {"POST"})
+_remove_route("/api/ai/command", {"POST"})
+_remove_route("/api/ai/poster", {"POST"})
+_remove_route("/api/quotations/ai-draft", {"POST"})
+_remove_route("/api/leads/import", {"POST"})
 
 app.include_router(secure_vault.router)
 app.include_router(secure_team.router)
 app.include_router(billing.router)
 app.include_router(saas.router)
 app.include_router(privacy.router)
+app.include_router(production_ai.router)
+app.include_router(flows.router)
+app.include_router(contacts.router)
 
 
 def _env_bool(name: str, default: bool = False) -> bool:
@@ -266,6 +278,17 @@ async def production_indexes():
         await core.db.billing_intents.create_index([("workspace_id", 1), ("created_at", -1)])
         await core.db.deletion_requests.create_index([("workspace_id", 1), ("user_id", 1), ("requested_at", -1)])
         await core.db.deletion_requests.create_index([("status", 1), ("requested_at", 1)])
+        await core.db.assistant_threads.create_index([("workspace_id", 1), ("user_id", 1), ("updated_at", -1)])
+        await core.db.assistant_messages.create_index([("workspace_id", 1), ("user_id", 1), ("thread_id", 1), ("created_at", 1)])
+        await core.db.flows.create_index([("workspace_id", 1), ("updated_at", -1)])
+        await core.db.flow_versions.create_index([("workspace_id", 1), ("flow_id", 1), ("version", 1)], unique=True)
+        await core.db.flow_sessions.create_index([("workspace_id", 1), ("flow_id", 1), ("status", 1), ("started_at", -1)])
+        await core.db.flow_sessions.create_index([("workspace_id", 1), ("user_id", 1), ("updated_at", -1)])
+        await core.db.flow_events.create_index([("workspace_id", 1), ("flow_id", 1), ("created_at", -1)])
+        await core.db.contact_imports.create_index("expires_at", expireAfterSeconds=0)
+        await core.db.contact_imports.create_index([("workspace_id", 1), ("created_at", -1)])
+        await core.db.broadcast_audiences.create_index([("workspace_id", 1), ("updated_at", -1)])
+        await core.db.leads.create_index([("workspace_id", 1), ("phone_hash", 1)], sparse=True)
     except Exception as exc:
         print(f"production startup hardening error: {type(exc).__name__}")
 

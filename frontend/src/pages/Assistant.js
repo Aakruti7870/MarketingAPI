@@ -1,10 +1,10 @@
-import React, { useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import api, { apiError } from "../api";
 import { useAuth } from "../context/AuthContext";
 import {
-  ArrowUp, Bot, Copy, FileUp, Globe2, Lightbulb, Mic2, Paperclip, RefreshCw,
+  ArrowUp, Bot, Copy, Globe2, Lightbulb, RefreshCw,
   Sparkles, ThumbsDown, ThumbsUp, WandSparkles, X,
 } from "lucide-react";
 
@@ -19,24 +19,39 @@ const PROMPTS = [
 export default function Assistant() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [loadingThread, setLoadingThread] = useState(false);
   const [messages, setMessages] = useState([]);
   const [promptsOpen, setPromptsOpen] = useState(false);
-  const [attachment, setAttachment] = useState(null);
-  const fileRef = useRef(null);
+  const [threadId, setThreadId] = useState(null);
+  const promptHandled = useRef("");
   const firstName = useMemo(() => (user?.name || "there").trim().split(/\s+/)[0], [user]);
+  const requestedThread = searchParams.get("thread") || "";
+  const starterPrompt = searchParams.get("prompt") || "";
+
+  const setThreadInUrl = (id) => {
+    const next = new URLSearchParams(searchParams);
+    if (id) next.set("thread", id); else next.delete("thread");
+    next.delete("prompt");
+    setSearchParams(next, { replace: true });
+  };
 
   const submit = async (text = input) => {
     const command = (text || "").trim();
-    if (!command || busy) return;
+    if (!command || busy || loadingThread) return;
     const userMessage = { id: `u-${Date.now()}`, role: "user", text: command };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setPromptsOpen(false);
     setBusy(true);
     try {
-      const { data } = await api.post("/ai/command", { command });
+      const { data } = await api.post("/ai/command", { command, thread_id: threadId || undefined });
+      if (data?.thread_id && data.thread_id !== threadId) {
+        setThreadId(data.thread_id);
+        setThreadInUrl(data.thread_id);
+      }
       setMessages((prev) => [...prev, {
         id: `a-${Date.now()}`,
         role: "assistant",
@@ -58,10 +73,46 @@ export default function Assistant() {
     }
   };
 
+  useEffect(() => {
+    if (!requestedThread || requestedThread === threadId) return;
+    let active = true;
+    setLoadingThread(true);
+    api.get(`/assistant/threads/${requestedThread}`)
+      .then(({ data }) => {
+        if (!active) return;
+        setThreadId(requestedThread);
+        setMessages((data?.messages || []).map((message) => ({
+          id: message.id,
+          role: message.role,
+          text: message.text,
+          action: message.action || null,
+          data: Array.isArray(message.data) ? message.data : null,
+        })));
+      })
+      .catch((err) => {
+        if (!active) return;
+        toast.error(apiError(err.response?.data?.detail) || "Conversation could not be loaded");
+        setThreadId(null);
+        setMessages([]);
+        setThreadInUrl(null);
+      })
+      .finally(() => active && setLoadingThread(false));
+    return () => { active = false; };
+  }, [requestedThread]);
+
+  useEffect(() => {
+    if (!starterPrompt || requestedThread || busy || loadingThread || messages.length) return;
+    if (promptHandled.current === starterPrompt) return;
+    promptHandled.current = starterPrompt;
+    submit(starterPrompt);
+  }, [starterPrompt, requestedThread, loadingThread]);
+
   const newChat = () => {
     setMessages([]);
     setInput("");
-    setAttachment(null);
+    setThreadId(null);
+    promptHandled.current = "";
+    setThreadInUrl(null);
   };
 
   return (
@@ -72,7 +123,9 @@ export default function Assistant() {
           <button onClick={newChat} className="rounded-xl border border-violet-100 bg-white/85 px-3 py-2 text-xs font-bold text-slate-600 shadow-sm transition hover:border-violet-200 hover:text-violet-700">New chat</button>
         </div>
 
-        {messages.length === 0 ? (
+        {loadingThread ? (
+          <div className="flex flex-1 items-center justify-center py-20"><div className="brand-gradient h-10 w-10 animate-pulse rounded-xl shadow-brand" /></div>
+        ) : messages.length === 0 ? (
           <div className="flex flex-1 flex-col items-center justify-center py-12 text-center lg:py-20">
             <div className="assistant-halo mb-8 flex h-24 w-24 items-center justify-center rounded-full"><Sparkles className="h-9 w-9 text-violet-600" /></div>
             <h1 className="font-heading max-w-3xl text-4xl font-medium tracking-[-0.045em] text-slate-950 sm:text-5xl lg:text-6xl">What’s on your mind<br className="hidden sm:block" /> today, {firstName}?</h1>
@@ -88,7 +141,7 @@ export default function Assistant() {
           </div>
         ) : (
           <div className="flex-1 space-y-8 py-8">
-            <div className="text-center text-xs font-semibold text-slate-400">Today</div>
+            <div className="text-center text-xs font-semibold text-slate-400">Conversation</div>
             {messages.map((message) => (
               <MessageBubble key={message.id} message={message} onOpenAction={(action) => {
                 if (action?.startsWith("navigate:")) navigate(action.slice("navigate:".length));
@@ -105,7 +158,6 @@ export default function Assistant() {
 
         <div className="sticky bottom-0 z-10 pt-5">
           <div className="assistant-composer">
-            {attachment && <div className="mb-2 flex items-center justify-between rounded-xl bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-700"><span className="flex items-center gap-2"><FileUp className="h-4 w-4" /> {attachment.name}</span><button onClick={() => setAttachment(null)}><X className="h-3.5 w-3.5" /></button></div>}
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value.slice(0, 3000))}
@@ -118,12 +170,9 @@ export default function Assistant() {
             />
             <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
               <div className="flex flex-wrap gap-2">
-                <input ref={fileRef} className="hidden" type="file" onChange={(e) => setAttachment(e.target.files?.[0] || null)} />
-                <ComposerAction icon={Paperclip} label="Attach" onClick={() => fileRef.current?.click()} />
-                <ComposerAction icon={Mic2} label="Voice Message" onClick={() => toast("Voice capture UI is ready for provider integration.")} />
                 <ComposerAction icon={WandSparkles} label="Browse Prompts" onClick={() => setPromptsOpen((v) => !v)} />
               </div>
-              <div className="flex items-center gap-3"><span className="text-[11px] font-semibold text-slate-400">{input.length}/3000</span><button onClick={() => submit()} disabled={!input.trim() || busy} className="brand-gradient flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-brand transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"><ArrowUp className="h-5 w-5" /></button></div>
+              <div className="flex items-center gap-3"><span className="text-[11px] font-semibold text-slate-400">{input.length}/3000</span><button onClick={() => submit()} disabled={!input.trim() || busy || loadingThread} className="brand-gradient flex h-10 w-10 items-center justify-center rounded-xl text-white shadow-brand transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-40"><ArrowUp className="h-5 w-5" /></button></div>
             </div>
           </div>
 
@@ -157,7 +206,7 @@ function MessageBubble({ message, onOpenAction, onRegenerate }) {
           {message.data?.length > 0 && <div className="mt-4 grid gap-2 sm:grid-cols-2">{message.data.slice(0, 6).map((item, index) => <div key={item.id || index} className="rounded-xl border border-violet-100 bg-white/75 p-3"><div className="text-sm font-extrabold text-slate-800">{item.name || item.company || `Result ${index + 1}`}</div>{item.company && item.name && <div className="mt-0.5 text-xs text-slate-500">{item.company}</div>}{item.score != null && <div className="mt-2 text-xs font-bold text-violet-600">AI score {item.score}</div>}</div>)}</div>}
           {message.action?.startsWith("navigate:") && <button onClick={() => onOpenAction(message.action)} className="mt-4 rounded-xl border border-violet-200 bg-white px-3 py-2 text-xs font-extrabold text-violet-700 shadow-sm hover:bg-violet-50">Open recommended workspace</button>}
         </div>
-        {!message.error && <div className="mt-2 flex items-center gap-1 text-slate-400"><TinyAction icon={Copy} label="Copy" onClick={() => { navigator.clipboard?.writeText(message.text); toast.success("Copied"); }} /><TinyAction icon={ThumbsUp} label="Helpful" /><TinyAction icon={ThumbsDown} label="Not helpful" /><TinyAction icon={RefreshCw} label="Regenerate" onClick={onRegenerate} /></div>}
+        {!message.error && <div className="mt-2 flex items-center gap-1 text-slate-400"><TinyAction icon={Copy} label="Copy" onClick={() => { navigator.clipboard?.writeText(message.text); toast.success("Copied"); }} /><TinyAction icon={ThumbsUp} label="Helpful" /><TinyAction icon={ThumbsDown} label="Not helpful" />{message.sourcePrompt && <TinyAction icon={RefreshCw} label="Regenerate" onClick={onRegenerate} />}</div>}
       </div>
     </div>
   );

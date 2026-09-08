@@ -305,3 +305,104 @@ def test_authenticated_data_deletion_request_is_idempotent():
     status = requests.get(f"{API}/privacy/deletion-request", headers=headers(token), timeout=10)
     assert status.status_code == 200, status.text
     assert status.json()["id"] == request["id"]
+
+
+def test_flow_engine_publish_branch_session_and_isolation():
+    owner = register_workspace("flows")
+    token = owner["token"]
+
+    templates = requests.get(f"{API}/flows/templates", headers=headers(token), timeout=10)
+    assert templates.status_code == 200, templates.text
+    assert any(item["key"] == "golde-support" for item in templates.json())
+
+    created = requests.post(
+        f"{API}/flows/from-template/golde-support",
+        headers=headers(token),
+        timeout=20,
+    )
+    assert created.status_code == 200, created.text
+    flow = created.json()
+    flow_id = flow["id"]
+    assert flow["status"] == "draft"
+    assert flow["definition"]["entry_screen"] == "issue"
+
+    live_before_publish = requests.post(
+        f"{API}/flows/{flow_id}/sessions",
+        headers=headers(token),
+        json={"channel": "web", "mode": "live"},
+        timeout=10,
+    )
+    assert live_before_publish.status_code == 400
+
+    published = requests.post(f"{API}/flows/{flow_id}/publish", headers=headers(token), timeout=20)
+    assert published.status_code == 200, published.text
+    assert published.json()["version"] == 1
+
+    start = requests.post(
+        f"{API}/flows/{flow_id}/sessions",
+        headers=headers(token),
+        json={"channel": "web", "mode": "live"},
+        timeout=20,
+    )
+    assert start.status_code == 200, start.text
+    session_id = start.json()["session"]["id"]
+    assert start.json()["screen"]["id"] == "issue"
+
+    branched = requests.post(
+        f"{API}/flows/sessions/{session_id}/submit",
+        headers=headers(token),
+        json={"answers": {"issue": "csv_import"}},
+        timeout=20,
+    )
+    assert branched.status_code == 200, branched.text
+    assert branched.json()["screen"]["id"] == "csv_import"
+
+    missing_required = requests.post(
+        f"{API}/flows/sessions/{session_id}/submit",
+        headers=headers(token),
+        json={"answers": {"details": "Numbers were missing"}},
+        timeout=20,
+    )
+    assert missing_required.status_code == 422
+    assert missing_required.json()["detail"]["code"] == "flow_validation"
+
+    completed = requests.post(
+        f"{API}/flows/sessions/{session_id}/submit",
+        headers=headers(token),
+        json={"answers": {"import_problem": "numbers_not_detected", "country": "+91"}},
+        timeout=20,
+    )
+    assert completed.status_code == 200, completed.text
+    assert completed.json()["session"]["status"] == "completed"
+    assert completed.json()["screen"] is None
+
+    metrics = requests.get(f"{API}/flows/{flow_id}/analytics", headers=headers(token), timeout=10)
+    assert metrics.status_code == 200, metrics.text
+    assert metrics.json()["started"] == 1
+    assert metrics.json()["completed"] == 1
+    assert metrics.json()["completion_rate"] == 100.0
+
+    unsafe = requests.post(
+        f"{API}/flows",
+        headers=headers(token),
+        json={
+            "name": "Unsafe Flow",
+            "category": "CUSTOMER_SUPPORT",
+            "channels": ["web"],
+            "definition": {
+                "entry_screen": "start",
+                "screens": [{
+                    "id": "start",
+                    "title": "Unsafe",
+                    "fields": [{"name": "api_token", "type": "text", "label": "Token", "required": True}],
+                    "terminal": True,
+                }],
+            },
+        },
+        timeout=10,
+    )
+    assert unsafe.status_code == 422
+
+    other = register_workspace("flow-isolation")
+    hidden = requests.get(f"{API}/flows/{flow_id}", headers=headers(other["token"]), timeout=10)
+    assert hidden.status_code == 404
