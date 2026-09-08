@@ -2,8 +2,10 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate, Link } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { ThemeProvider, useTheme } from "./context/ThemeContext";
 import Layout from "./components/Layout";
 import PrivacyRequestCard from "./components/PrivacyRequestCard";
+import ThemeToggle from "./components/ThemeToggle";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Assistant from "./pages/Assistant";
@@ -41,6 +43,11 @@ function GuestOnly({ children }) {
   return children;
 }
 
+function ThemeAwareToaster() {
+  const { resolvedTheme } = useTheme();
+  return <Toaster position="top-right" richColors theme={resolvedTheme} />;
+}
+
 function PublicLegalLinks() {
   return (
     <div className="border-t border-slate-200/70 bg-white px-5 py-3 text-center text-[11px] font-semibold text-slate-500">
@@ -53,8 +60,14 @@ function PublicLegalLinks() {
   );
 }
 
-function PublicPage({ children }) {
-  return <>{children}<PublicLegalLinks /></>;
+function PublicPage({ children, legal = true }) {
+  return (
+    <>
+      <div className="public-theme-control"><ThemeToggle /></div>
+      {children}
+      {legal && <PublicLegalLinks />}
+    </>
+  );
 }
 
 function SettingsWithPrivacy() {
@@ -63,44 +76,46 @@ function SettingsWithPrivacy() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Toaster position="top-right" richColors />
-        <Routes>
-          <Route path="/" element={<PublicPage><Landing /></PublicPage>} />
-          <Route path="/pricing" element={<PublicPage><Pricing /></PublicPage>} />
-          <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/terms" element={<TermsOfService />} />
-          <Route path="/data-deletion" element={<DataDeletion />} />
-          <Route path="/login" element={<GuestOnly><PublicPage><Auth /></PublicPage></GuestOnly>} />
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <ThemeAwareToaster />
+          <Routes>
+            <Route path="/" element={<PublicPage><Landing /></PublicPage>} />
+            <Route path="/pricing" element={<PublicPage><Pricing /></PublicPage>} />
+            <Route path="/privacy" element={<PublicPage legal={false}><PrivacyPolicy /></PublicPage>} />
+            <Route path="/terms" element={<PublicPage legal={false}><TermsOfService /></PublicPage>} />
+            <Route path="/data-deletion" element={<PublicPage legal={false}><DataDeletion /></PublicPage>} />
+            <Route path="/login" element={<GuestOnly><PublicPage><Auth /></PublicPage></GuestOnly>} />
 
-          <Route path="/assistant" element={<Protected><Assistant /></Protected>} />
-          <Route path="/explore" element={<Protected><ExplorePage /></Protected>} />
-          <Route path="/use-cases" element={<Protected><UseCasesPage /></Protected>} />
-          <Route path="/files" element={<Protected><FilesPage /></Protected>} />
-          <Route path="/history" element={<Protected><HistoryPage /></Protected>} />
-          <Route path="/settings" element={<Protected><SettingsWithPrivacy /></Protected>} />
+            <Route path="/assistant" element={<Protected><Assistant /></Protected>} />
+            <Route path="/explore" element={<Protected><ExplorePage /></Protected>} />
+            <Route path="/use-cases" element={<Protected><UseCasesPage /></Protected>} />
+            <Route path="/files" element={<Protected><FilesPage /></Protected>} />
+            <Route path="/history" element={<Protected><HistoryPage /></Protected>} />
+            <Route path="/settings" element={<Protected><SettingsWithPrivacy /></Protected>} />
 
-          <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
-          <Route path="/leads" element={<Protected><Leads /></Protected>} />
-          <Route path="/pipeline" element={<Protected><Pipeline /></Protected>} />
-          <Route path="/inbox" element={<Protected><Inbox /></Protected>} />
-          <Route path="/campaigns" element={<Protected><Campaigns /></Protected>} />
-          <Route path="/templates" element={<Protected><Templates /></Protected>} />
-          <Route path="/ai-studio" element={<Protected><AIStudio /></Protected>} />
-          <Route path="/automations" element={<Protected><Automations /></Protected>} />
-          <Route path="/flows" element={<Protected><Flows /></Protected>} />
-          <Route path="/quotations" element={<Protected><Quotations /></Protected>} />
-          <Route path="/consent" element={<Protected><Consent /></Protected>} />
-          <Route path="/analytics" element={<Protected><Analytics /></Protected>} />
-          <Route path="/developer" element={<Protected><Developer /></Protected>} />
-          <Route path="/whatsapp" element={<Protected><WhatsApp /></Protected>} />
-          <Route path="/team" element={<Protected><Team /></Protected>} />
-          <Route path="/vault" element={<Protected><Vault /></Protected>} />
-          <Route path="/workspace" element={<Protected><Workspace /></Protected>} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+            <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
+            <Route path="/leads" element={<Protected><Leads /></Protected>} />
+            <Route path="/pipeline" element={<Protected><Pipeline /></Protected>} />
+            <Route path="/inbox" element={<Protected><Inbox /></Protected>} />
+            <Route path="/campaigns" element={<Protected><Campaigns /></Protected>} />
+            <Route path="/templates" element={<Protected><Templates /></Protected>} />
+            <Route path="/ai-studio" element={<Protected><AIStudio /></Protected>} />
+            <Route path="/automations" element={<Protected><Automations /></Protected>} />
+            <Route path="/flows" element={<Protected><Flows /></Protected>} />
+            <Route path="/quotations" element={<Protected><Quotations /></Protected>} />
+            <Route path="/consent" element={<Protected><Consent /></Protected>} />
+            <Route path="/analytics" element={<Protected><Analytics /></Protected>} />
+            <Route path="/developer" element={<Protected><Developer /></Protected>} />
+            <Route path="/whatsapp" element={<Protected><WhatsApp /></Protected>} />
+            <Route path="/team" element={<Protected><Team /></Protected>} />
+            <Route path="/vault" element={<Protected><Vault /></Protected>} />
+            <Route path="/workspace" element={<Protected><Workspace /></Protected>} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
