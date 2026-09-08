@@ -5,7 +5,7 @@ import api from "../api";
 import UpgradeModal from "./UpgradeModal";
 import {
   BarChart3, Bell, Bot, ChevronDown, ChevronRight, Code2, FileText, FolderOpen,
-  Gauge, History, Home, Kanban, KeyRound, LayoutDashboard, LogOut, Menu,
+  Gauge, GitBranch, History, Home, Kanban, KeyRound, LayoutDashboard, LogOut, Menu,
   MessageSquare, PanelLeftClose, Phone, Receipt, Search, Send, Settings,
   ShieldCheck, Sparkles, Sun, Users, UsersRound, WandSparkles, X, Zap,
 } from "lucide-react";
@@ -26,6 +26,7 @@ const BUSINESS_NAV = [
   { name: "Campaign Studio", icon: Send, path: "/campaigns" },
   { name: "AI Studio", icon: Sparkles, path: "/ai-studio", badge: "AI" },
   { name: "Templates", icon: FileText, path: "/templates" },
+  { name: "Flows", icon: GitBranch, path: "/flows", badge: "NEW" },
   { name: "Autopilot", icon: Zap, path: "/automations" },
   { name: "Analytics", icon: BarChart3, path: "/analytics" },
 ];
