@@ -246,7 +246,7 @@ async def ai_command(body: CommandIn, user: dict = Depends(get_current_user)):
             used_this_month = await db.coin_ledger.count_documents({
                 "workspace_id": ws,
                 "created_at": {"$gte": _month_start()},
-                "kind": "debit",
+                "direction": "debit",
             })
             result.update({
                 "reply": (
