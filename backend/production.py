@@ -24,6 +24,7 @@ if not os.environ.get("VAULT_KEY"):
 
 import billing
 import core
+import flows
 import privacy
 import production_ai
 import saas
@@ -68,6 +69,7 @@ app.include_router(billing.router)
 app.include_router(saas.router)
 app.include_router(privacy.router)
 app.include_router(production_ai.router)
+app.include_router(flows.router)
 
 
 def _env_bool(name: str, default: bool = False) -> bool:
@@ -275,6 +277,11 @@ async def production_indexes():
         await core.db.deletion_requests.create_index([("status", 1), ("requested_at", 1)])
         await core.db.assistant_threads.create_index([("workspace_id", 1), ("user_id", 1), ("updated_at", -1)])
         await core.db.assistant_messages.create_index([("workspace_id", 1), ("user_id", 1), ("thread_id", 1), ("created_at", 1)])
+        await core.db.flows.create_index([("workspace_id", 1), ("updated_at", -1)])
+        await core.db.flow_versions.create_index([("workspace_id", 1), ("flow_id", 1), ("version", 1)], unique=True)
+        await core.db.flow_sessions.create_index([("workspace_id", 1), ("flow_id", 1), ("status", 1), ("started_at", -1)])
+        await core.db.flow_sessions.create_index([("workspace_id", 1), ("user_id", 1), ("updated_at", -1)])
+        await core.db.flow_events.create_index([("workspace_id", 1), ("flow_id", 1), ("created_at", -1)])
     except Exception as exc:
         print(f"production startup hardening error: {type(exc).__name__}")
 
