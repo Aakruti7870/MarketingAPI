@@ -52,8 +52,8 @@ function PublicLegalLinks() {
   );
 }
 
-function LandingWithLegalLinks() {
-  return <><Landing /><PublicLegalLinks /></>;
+function PublicPage({ children }) {
+  return <>{children}<PublicLegalLinks /></>;
 }
 
 function SettingsWithPrivacy() {
@@ -66,12 +66,12 @@ export default function App() {
       <BrowserRouter>
         <Toaster position="top-right" richColors />
         <Routes>
-          <Route path="/" element={<LandingWithLegalLinks />} />
-          <Route path="/pricing" element={<Pricing />} />
+          <Route path="/" element={<PublicPage><Landing /></PublicPage>} />
+          <Route path="/pricing" element={<PublicPage><Pricing /></PublicPage>} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/data-deletion" element={<DataDeletion />} />
-          <Route path="/login" element={<GuestOnly><Auth /></GuestOnly>} />
+          <Route path="/login" element={<GuestOnly><PublicPage><Auth /></PublicPage></GuestOnly>} />
 
           <Route path="/assistant" element={<Protected><Assistant /></Protected>} />
           <Route path="/explore" element={<Protected><ExplorePage /></Protected>} />
