@@ -2,12 +2,13 @@ import React, { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import api from "../api";
+import ThemeToggle from "./ThemeToggle";
 import UpgradeModal from "./UpgradeModal";
 import {
   BarChart3, Bell, Bot, ChevronDown, ChevronRight, Code2, FileText, FolderOpen,
   Gauge, GitBranch, History, Home, Kanban, KeyRound, LayoutDashboard, LogOut, Menu,
   MessageSquare, PanelLeftClose, Phone, Receipt, Search, Send, Settings,
-  ShieldCheck, Sparkles, Sun, Users, UsersRound, WandSparkles, X, Zap,
+  ShieldCheck, Sparkles, Users, UsersRound, WandSparkles, X, Zap,
 } from "lucide-react";
 
 const AI_NAV = [
@@ -71,7 +72,7 @@ export default function Layout({ children }) {
   const plan = saas?.workspace?.plan || user?.plan || "Free";
 
   const sidebar = (
-    <aside className="flex h-full w-[270px] shrink-0 flex-col border-r border-violet-100/80 bg-white/82 backdrop-blur-2xl">
+    <aside className="workspace-sidebar flex h-full w-[270px] shrink-0 flex-col border-r border-violet-100/80 bg-white/82 backdrop-blur-2xl">
       <div className="flex h-[72px] items-center justify-between border-b border-violet-100/70 px-4">
         <button onClick={() => navigate("/")} className="flex min-w-0 items-center gap-3 text-left">
           <div className="brand-gradient flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-white shadow-brand"><Sparkles className="h-5 w-5" /></div>
@@ -123,18 +124,18 @@ export default function Layout({ children }) {
       {mobileOpen && <div className="fixed inset-0 z-50 md:hidden"><button aria-label="Close navigation" className="absolute inset-0 bg-slate-950/25 backdrop-blur-sm" onClick={() => setMobileOpen(false)} /><div className="relative h-full w-[286px] shadow-2xl">{sidebar}</div></div>}
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="flex h-[72px] shrink-0 items-center justify-between border-b border-violet-100/70 bg-white/72 px-4 backdrop-blur-2xl sm:px-6">
+        <header className="workspace-header flex h-[72px] shrink-0 items-center justify-between border-b border-violet-100/70 bg-white/72 px-4 backdrop-blur-2xl sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
-            <button onClick={() => setMobileOpen(true)} className="soft-round md:hidden"><Menu className="h-4 w-4" /></button>
+            <button onClick={() => setMobileOpen(true)} className="soft-round md:hidden" aria-label="Open navigation"><Menu className="h-4 w-4" /></button>
             <div className="hidden h-9 w-9 items-center justify-center rounded-xl border border-violet-100 bg-white text-violet-600 shadow-sm sm:flex"><PanelLeftClose className="h-4 w-4" /></div>
             <div className="min-w-0"><div className="truncate font-heading text-base font-extrabold text-slate-950 sm:text-lg">{title}</div><div className="hidden text-[10px] font-semibold text-slate-400 sm:block">{user?.workspace_name || "My Workspace"}</div></div>
           </div>
 
           <div className="flex items-center gap-2">
-            <button title="Notifications" className="top-icon relative"><Bell className="h-4 w-4" /><span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-rose-500 ring-2 ring-white" /></button>
-            <button title="Appearance" className="top-icon"><Sun className="h-4 w-4" /></button>
-            <button onClick={() => navigate("/dashboard")} title="Workspace dashboard" className="top-icon hidden sm:flex"><Home className="h-4 w-4" /></button>
-            <button onClick={() => navigate("/workspace")} className="ml-1 flex h-9 w-9 items-center justify-center rounded-full brand-gradient text-sm font-extrabold text-white shadow-brand">{(user?.name || "U")[0]?.toUpperCase()}</button>
+            <button title="Notifications" aria-label="Notifications" className="top-icon relative"><Bell className="h-4 w-4" /><span className="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-rose-500 ring-2 ring-white" /></button>
+            <ThemeToggle compact />
+            <button onClick={() => navigate("/dashboard")} title="Workspace dashboard" aria-label="Workspace dashboard" className="top-icon hidden sm:flex"><Home className="h-4 w-4" /></button>
+            <button onClick={() => navigate("/workspace")} aria-label="Open workspace profile" className="ml-1 flex h-9 w-9 items-center justify-center rounded-full brand-gradient text-sm font-extrabold text-white shadow-brand">{(user?.name || "U")[0]?.toUpperCase()}</button>
           </div>
         </header>
 
