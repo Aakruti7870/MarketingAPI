@@ -24,6 +24,7 @@ import Developer from "./pages/Developer";
 import WhatsApp from "./pages/WhatsApp";
 import Workspace from "./pages/Workspace";
 import Pricing from "./pages/Pricing";
+import { PrivacyPolicy, TermsOfService, DataDeletion } from "./pages/LegalPages";
 
 function Protected({ children }) {
   const { user } = useAuth();
@@ -46,6 +47,9 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/pricing" element={<Pricing />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/data-deletion" element={<DataDeletion />} />
           <Route path="/login" element={<GuestOnly><Auth /></GuestOnly>} />
 
           <Route path="/assistant" element={<Protected><Assistant /></Protected>} />
