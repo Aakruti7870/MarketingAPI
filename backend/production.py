@@ -24,6 +24,7 @@ if not os.environ.get("VAULT_KEY"):
 
 import billing
 import core
+import privacy
 import saas
 import secure_team
 import secure_vault
@@ -59,6 +60,7 @@ app.include_router(secure_vault.router)
 app.include_router(secure_team.router)
 app.include_router(billing.router)
 app.include_router(saas.router)
+app.include_router(privacy.router)
 
 
 def _env_bool(name: str, default: bool = False) -> bool:
@@ -262,6 +264,8 @@ async def production_indexes():
         await core.db.webhook_events.create_index([("workspace_id", 1), ("created_at", -1)])
         await core.db.coin_ledger.create_index([("workspace_id", 1), ("created_at", -1)])
         await core.db.billing_intents.create_index([("workspace_id", 1), ("created_at", -1)])
+        await core.db.deletion_requests.create_index([("workspace_id", 1), ("user_id", 1), ("requested_at", -1)])
+        await core.db.deletion_requests.create_index([("status", 1), ("requested_at", 1)])
     except Exception as exc:
         print(f"production startup hardening error: {type(exc).__name__}")
 
