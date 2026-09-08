@@ -3,8 +3,19 @@
   --gold-e-logo-image: url('/gold-e-ai-logo.jpg');
 }
 
-/* Replace only the temporary sparkle glyph used as a square brand mark. */
-.brand-gradient.h-9.w-9:has(> svg.lucide-sparkles),
+/*
+ * Landing-page logo audit
+ * - Header brand
+ * - Hero lockup
+ * - Product preview sidebar
+ * - Feature mini-chat
+ * - FAQ phone showcase
+ * - Footer brand
+ *
+ * The 36 px BrandMark is targeted directly on the landing page so the
+ * supplied logo renders even in browsers/webviews without :has() support.
+ */
+.landing-shell .brand-gradient.h-9.w-9,
 .brand-gradient.h-10.w-10:has(> svg.lucide-sparkles),
 .brand-gradient.h-11.w-11:has(> svg.lucide-sparkles) {
   background-color: rgba(255, 255, 255, 0.96) !important;
@@ -17,21 +28,21 @@
   overflow: hidden;
 }
 
-.brand-gradient.h-9.w-9:has(> svg.lucide-sparkles) > svg,
+.landing-shell .brand-gradient.h-9.w-9 > svg.lucide-sparkles,
 .brand-gradient.h-10.w-10:has(> svg.lucide-sparkles) > svg,
 .brand-gradient.h-11.w-11:has(> svg.lucide-sparkles) > svg {
   opacity: 0 !important;
 }
 
-/* The full supplied lockup is shown only where its square dimensions stay legible. */
+/* Full supplied lockup: large enough to keep GOLD-e AI / AI Revenue Engine legible. */
 .landing-shell section#home > .relative.mx-auto.max-w-5xl.text-center::before {
   content: '';
   display: block;
-  width: clamp(136px, 16vw, 176px);
+  width: clamp(144px, 17vw, 184px);
   aspect-ratio: 1 / 1;
   margin: 0 auto 14px;
-  background: rgba(255, 255, 255, 0.74) var(--gold-e-logo-image) center / contain no-repeat;
-  border: 1px solid rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.76) var(--gold-e-logo-image) center / contain no-repeat;
+  border: 1px solid rgba(255, 255, 255, 0.94);
   border-radius: 32px;
   box-shadow: 0 24px 70px rgba(103, 58, 183, 0.13);
 }
