@@ -51,6 +51,7 @@ _remove_route("/api/vault/{cid}", {"DELETE"})
 _remove_route("/api/team", {"GET", "POST"})
 _remove_route("/api/team/{uid}", {"DELETE"})
 _remove_route("/api/dashboard", {"GET"})
+_remove_route("/api/audit", {"GET"})
 _remove_route("/api/campaigns", {"POST"})
 _remove_route("/api/consent/opt-outs", {"GET"})
 
@@ -199,6 +200,11 @@ async def production_dashboard(user: dict = Depends(server.get_current_user)):
     kpis.pop("avg_response", None)
     payload["kpis"] = kpis
     return payload
+
+
+@app.get("/api/audit")
+async def production_audit(user: dict = Depends(server.require_role("owner", "admin"))):
+    return await server.audit_list(user)
 
 
 @app.post("/api/campaigns")

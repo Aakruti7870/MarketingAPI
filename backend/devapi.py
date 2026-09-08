@@ -18,7 +18,6 @@ from core import (
     oid,
     phone_hash,
     require_role,
-    get_current_user,
     sha256,
 )
 
@@ -78,7 +77,7 @@ async def _consume_rate_limit(key_id: str, limit: int) -> None:
 
 
 @router.get("/keys")
-async def list_keys(user: dict = Depends(get_current_user)):
+async def list_keys(user: dict = Depends(require_role("owner", "admin"))):
     rows = await db.api_keys.find({"workspace_id": user["workspace_id"]}).sort("created_at", -1).to_list(100)
     return [
         {
@@ -160,7 +159,7 @@ async def revoke_key(kid: str, user: dict = Depends(require_role("owner", "admin
 
 
 @router.get("/usage")
-async def usage(user: dict = Depends(get_current_user)):
+async def usage(user: dict = Depends(require_role("owner", "admin"))):
     rows = await db.api_usage.find({"workspace_id": user["workspace_id"]}).sort("at", -1).to_list(250)
     return [clean(row) for row in rows]
 
