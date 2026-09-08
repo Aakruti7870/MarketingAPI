@@ -130,6 +130,47 @@ def test_admin_cannot_escalate_roles():
     assert agent.json()["role"] == "agent"
 
 
+def test_sensitive_read_endpoints_are_owner_admin_only():
+    owner, _ = register("sensitive-read")
+    owner_token = owner["token"]
+
+    credentials = {}
+    for role in ("admin", "agent"):
+        email = f"{role}-{uuid.uuid4().hex[:8]}@example.com"
+        password = f"{role.title()}Secure123!"
+        invite = requests.post(
+            f"{API}/team",
+            headers=auth(owner_token),
+            json={
+                "name": f"Security {role.title()}",
+                "email": email,
+                "password": password,
+                "role": role,
+            },
+            timeout=20,
+        )
+        assert invite.status_code == 200, invite.text
+
+        login = requests.post(
+            f"{API}/auth/login",
+            json={"email": email, "password": password},
+            timeout=20,
+        )
+        assert login.status_code == 200, login.text
+        credentials[role] = login.json()["token"]
+
+    protected = ("/audit", "/dev/keys", "/dev/usage", "/vault")
+
+    for token in (owner_token, credentials["admin"]):
+        for path in protected:
+            response = requests.get(f"{API}{path}", headers=auth(token), timeout=20)
+            assert response.status_code == 200, f"{path}: {response.text}"
+
+    for path in protected:
+        response = requests.get(f"{API}{path}", headers=auth(credentials["agent"]), timeout=20)
+        assert response.status_code == 403, f"{path}: {response.text}"
+
+
 def test_legacy_campaign_create_no_longer_fakes_a_send():
     owner, _ = register("legacy-campaign")
     response = requests.post(
