@@ -1,13 +1,10 @@
-"""Consent-safe multi-channel outbound dispatcher.
-
-WhatsApp retains its existing Meta Cloud API implementation. Email and SMS use
-provider_adapters and share the same message/audit/inbox lifecycle.
-"""
+"""Consent-safe multi-channel outbound dispatcher."""
 from typing import Optional
 
 from consent import can_send
 from core import audit, db, now_iso, oid, render_vars
 from provider_adapters import send_email, send_sms
+from social import send_social
 from whatsapp import send_via_channel as send_whatsapp
 
 
@@ -68,6 +65,8 @@ async def send_via_channel(
         result = await send_email(workspace_id, lead, rendered, campaign=campaign)
     elif normalized == "sms":
         result = await send_sms(workspace_id, lead, rendered)
+    elif normalized in {"instagram", "facebook"}:
+        result = await send_social(workspace_id, lead, channel, rendered)
     else:
         result = {"mode": "disabled", "error": "channel_provider_not_configured", "provider_id": None}
 

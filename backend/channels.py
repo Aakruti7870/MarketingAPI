@@ -89,7 +89,7 @@ async def list_channels(user: dict = Depends(get_current_user)):
 @router.post("/test-send")
 async def test_send(body: ChannelTestSendIn, user: dict = Depends(get_current_user)):
     channel = body.channel.strip()
-    if channel.lower() not in {"whatsapp", "email", "sms"}:
+    if channel.lower() not in {"whatsapp", "email", "sms", "instagram", "facebook"}:
         raise HTTPException(status_code=400, detail="This channel does not have a live delivery adapter yet")
     lead = await db.leads.find_one({"id": body.lead_id, "workspace_id": user["workspace_id"]})
     if not lead:
@@ -120,7 +120,7 @@ async def save_channel(slug: str, body: ChannelIn, user: dict = Depends(require_
     supplied = {k: str(v).strip() for k, v in body.fields.items() if k in allowed and str(v).strip()}
     existing = await db.channel_connections.find_one({"workspace_id": user["workspace_id"], "channel": slug})
     if not supplied and not existing and body.enabled:
-        raise HTTPException(400, detail="Add at least one configuration field")
+        raise HTTPException(status_code=400, detail="Add at least one configuration field")
 
     fields_enc = dict((existing or {}).get("fields_enc", {}))
     fields_enc.update({key: encrypt_str(value) for key, value in supplied.items()})
@@ -146,9 +146,9 @@ async def save_channel(slug: str, body: ChannelIn, user: dict = Depends(require_
 @router.delete("/{slug}")
 async def delete_channel(slug: str, user: dict = Depends(require_role("owner", "admin"))):
     if slug == "whatsapp":
-        raise HTTPException(400, detail="Disconnect WhatsApp from the dedicated WhatsApp screen")
+        raise HTTPException(status_code=400, detail="Disconnect WhatsApp from the dedicated WhatsApp screen")
     if slug not in CHANNELS:
-        raise HTTPException(404, detail="Unknown channel or integration")
+        raise HTTPException(status_code=404, detail="Unknown channel or integration")
     await db.channel_connections.delete_one({"workspace_id": user["workspace_id"], "channel": slug})
     await audit(user["workspace_id"], user.get("name", "user"), "channel.disconnected", "channel", {"channel": slug})
     return {"ok": True, "channel": slug, "status": "setup_required"}

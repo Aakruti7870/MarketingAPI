@@ -40,11 +40,11 @@ const FIELD_LABELS = {
   base_url: "API Endpoint (optional)",
   route: "MSG91 Route",
   country: "Country Code",
-  instagram_account_id: "Instagram Account ID",
-  page_id: "Page ID",
-  access_token: "Access Token",
-  app_secret: "App Secret",
-  page_access_token: "Page Access Token",
+  instagram_account_id: "Instagram Business Account ID",
+  page_id: "Facebook Page ID",
+  access_token: "Instagram/Page Access Token",
+  app_secret: "Meta App Secret",
+  page_access_token: "Facebook Page Access Token",
   site_name: "Website / Widget Name",
   allowed_origin: "Allowed Website Origin",
   region: "Region",
@@ -59,7 +59,7 @@ const FIELD_LABELS = {
 };
 
 const SECRET_FIELDS = new Set(["password", "api_key", "auth_key", "access_token", "app_secret", "page_access_token", "service_account_json", "secret"]);
-const VERIFY_CHANNELS = new Set(["email", "sms"]);
+const VERIFY_CHANNELS = new Set(["email", "sms", "instagram", "facebook"]);
 
 function statusTone(status) {
   if (status === "live") return "green";
@@ -207,7 +207,7 @@ export default function Channels() {
       ))}
 
       <div className="rounded-2xl border border-violet-100 bg-violet-50/70 p-4 text-xs leading-5 text-violet-700">
-        <b>Provider state:</b> WhatsApp is Live when its Meta Cloud API connection is active. Email and SMS become Live only after GOLD-e completes a successful provider send. Other connectors stay Configured until their own delivery/verification adapter is installed.
+        <b>Provider state:</b> WhatsApp uses Meta Cloud API. Email, SMS, Instagram and Facebook become Live only after GOLD-e records a successful provider send. Instagram/Facebook inbound events enter Unified Inbox through the signed Meta social webhook.
       </div>
 
       <Modal open={!!selected} onClose={() => setSelected(null)} title={selected ? `Connect ${selected.name}` : "Connect channel"} className="max-w-xl">
@@ -225,10 +225,10 @@ export default function Channels() {
         {testItem && <form onSubmit={runVerify} className="space-y-4">
           <Select label="Consented test contact" value={testLeadId} onChange={(e) => setTestLeadId(e.target.value)} required>
             <option value="">Choose a lead</option>
-            {testLeads.map((lead) => <option key={lead.id} value={lead.id}>{lead.name} · {lead.phone_masked || lead.email || "contact"}</option>)}
+            {testLeads.map((lead) => <option key={lead.id} value={lead.id}>{lead.name} · {lead.phone_masked || lead.email || lead.channel || "contact"}</option>)}
           </Select>
           <Textarea label="Verification message" rows={3} value={testBody} onChange={(e) => setTestBody(e.target.value)} required />
-          <p className="text-xs leading-5 text-slate-500">The normal Consent Guard runs first. Use only your own or explicitly opted-in test contact.</p>
+          <p className="text-xs leading-5 text-slate-500">The normal Consent Guard runs first. For Instagram/Facebook, use a lead created from a real inbound social conversation so GOLD-e has the provider-scoped recipient ID.</p>
           <Button type="submit" className="w-full" disabled={testing || !testLeadId}>{testing ? "Sending…" : "Send Verification"}</Button>
         </form>}
       </Modal>
