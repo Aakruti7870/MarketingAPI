@@ -253,13 +253,14 @@ async def upgrade_intent(body: UpgradeIntent, user: dict = Depends(get_current_u
         "requested_by": user.get("id"),
         "plan": "Pro",
         "interval": body.interval,
-        "status": "checkout_available",
+        "status": "pending_checkout",
         "created_at": now_iso(),
     })
     return {
         "id": request_id,
-        "status": "checkout_available",
-        "checkout_ready": True,
+        "status": "pending_checkout",
+        "checkout_ready": False,
+        "message": "Plan selected. Use the Cashfree checkout flow to start payment.",
         "checkout_endpoint": "/api/billing/cashfree/checkout",
     }
 
