@@ -70,6 +70,9 @@ jobs:
           ENABLE_IN_PROCESS_AUTOPILOT: "false"
           META_WEBHOOK_VERIFY_TOKEN: e2e-meta-verify
           CRON_SECRET: e2e-cron-secret
+          CASHFREE_CLIENT_ID: e2e-cashfree-client
+          CASHFREE_CLIENT_SECRET: e2e-cashfree-secret
+          CASHFREE_ENV: sandbox
           APP_ENV: test
         run: |
           PYTHONPATH=backend uvicorn production:app --host 127.0.0.1 --port 8000 > /tmp/marketingapi.log 2>&1 &

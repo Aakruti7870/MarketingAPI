@@ -1,12 +1,9 @@
-"""Pricing, coin wallet, and billing intent APIs.
+"""Pricing, coin wallet, and billing APIs.
 
 Launch model:
 - Free: 100 one-time coins. They never reset.
 - Pro Monthly: INR 1,999/month with 2,000 coins refreshed monthly.
 - Pro Annual: INR 19,990/year with the same 2,000-coin monthly refresh.
-
-Subscription activation remains server-controlled. A payment provider/webhook can later
-activate Pro without changing the pricing/entitlement contract in this module.
 """
 from datetime import datetime, timezone
 
@@ -95,7 +92,7 @@ PRICING = {
         "save_percent": 16.7,
         "coins": PRO_MONTHLY_COINS,
         "coin_policy": "monthly_refresh",
-        "description": "Best value for teams using GOLD-e as an ongoing revenue operating system.",
+        "description": "Best value for teams using GOLD-e as an ongoing AI revenue operating system.",
         "features": [
             "2,000 coins refreshed every month (24,000/year)",
             "Everything in Pro Monthly",
@@ -147,7 +144,6 @@ async def ensure_wallet(workspace_id: str) -> dict:
         await db.workspaces.update_one({"id": workspace_id}, {"$set": updates})
         workspace.update(updates)
 
-    # Paid plans get a controlled monthly refresh even when billed annually.
     if plan == "Pro" and workspace.get("subscription_status") == "active":
         current_period = _period_key()
         if workspace.get("coin_period") != current_period:
@@ -264,5 +260,10 @@ async def upgrade_intent(body: UpgradeIntent, user: dict = Depends(get_current_u
         "id": request_id,
         "status": "pending_checkout",
         "checkout_ready": False,
-        "message": "Plan selected. Payment checkout must be connected before subscription activation.",
+        "message": "Plan selected. Use the Cashfree checkout flow to start payment.",
+        "checkout_endpoint": "/api/billing/cashfree/checkout",
     }
+
+
+from cashfree_billing import router as cashfree_router  # noqa: E402
+router.include_router(cashfree_router)

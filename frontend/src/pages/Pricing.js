@@ -1,7 +1,10 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Button, Card, Badge } from "../components/ui";
+import CashfreeCheckout from "../components/CashfreeCheckout";
+import api, { apiError } from "../api";
+import { toast } from "sonner";
 import {
   ArrowRight,
   Check,
@@ -166,9 +169,12 @@ function PricingCard({ plan, onFree }) {
             Start Free <ArrowRight className="w-4 h-4" />
           </Button>
         ) : (
-          <Button className="w-full mt-7" variant="outline" disabled>
-            Paid plan · Coming Soon
-          </Button>
+          <CashfreeCheckout
+            interval={plan.key === "annual" ? "year" : "month"}
+            className="mt-7 w-full rounded-xl border border-violet-200 bg-white px-4 py-3 text-sm font-extrabold text-violet-700 transition hover:border-violet-300 hover:bg-violet-50"
+          >
+            Upgrade with Cashfree
+          </CashfreeCheckout>
         )}
       </div>
     </Card>
@@ -178,6 +184,33 @@ function PricingCard({ plan, onFree }) {
 export default function Pricing() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
+
+  useEffect(() => {
+    const cashfreeOrderId = params.get("cashfree_order_id");
+    if (!cashfreeOrderId || !user) return;
+    let cancelled = false;
+    const verify = async () => {
+      toast.loading("Verifying Cashfree payment…", { id: "cashfree-return" });
+      try {
+        const { data: orders } = await api.get("/billing/cashfree/orders");
+        const order = (orders || []).find((row) => row.cashfree_order_id === cashfreeOrderId);
+        if (!order) throw new Error("Billing order was not found");
+        const { data } = await api.post(`/billing/cashfree/orders/${order.id}/verify`);
+        if (cancelled) return;
+        if (data.status === "paid") {
+          toast.success("Payment verified. GOLD-e Pro is active.", { id: "cashfree-return" });
+        } else {
+          toast.info(`Payment status: ${data.provider_status || data.status}`, { id: "cashfree-return" });
+        }
+        setParams({}, { replace: true });
+      } catch (err) {
+        if (!cancelled) toast.error(apiError(err.response?.data?.detail) || err.message || "Payment verification failed", { id: "cashfree-return" });
+      }
+    };
+    verify();
+    return () => { cancelled = true; };
+  }, [params, setParams, user]);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -200,7 +233,7 @@ export default function Pricing() {
           <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-500">
             <span className="inline-flex items-center gap-1.5"><ShieldCheck className="w-4 h-4 text-emerald-500" /> No card required for Free</span>
             <span className="inline-flex items-center gap-1.5"><Coins className="w-4 h-4 text-gold-600" /> Transparent coin usage</span>
-            <span className="inline-flex items-center gap-1.5"><Zap className="w-4 h-4 text-amber-500" /> Monthly or annual Pro</span>
+            <span className="inline-flex items-center gap-1.5"><Zap className="w-4 h-4 text-amber-500" /> Secure Cashfree checkout</span>
           </div>
         </div>
       </section>
@@ -256,12 +289,12 @@ export default function Pricing() {
           </Card>
         </div>
 
-        <div className="mt-8 rounded-2xl border border-slate-200 bg-white px-5 py-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="mt-8 rounded-2xl border border-emerald-200 bg-emerald-50/70 px-5 py-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div>
-            <p className="font-semibold text-slate-900">Paid checkout is not enabled yet.</p>
-            <p className="text-sm text-slate-500 mt-0.5">This is the pricing page only. Payment integration can be added separately when you are ready.</p>
+            <p className="font-semibold text-slate-900">Server-verified Cashfree billing</p>
+            <p className="text-sm text-slate-500 mt-0.5">The browser cannot activate Pro. GOLD-e verifies the signed webhook or Cashfree order status first.</p>
           </div>
-          <Badge tone="slate">Pricing Preview</Badge>
+          <Badge tone="green">Checkout Ready</Badge>
         </div>
 
         <p className="text-xs text-slate-400 text-center mt-6">
