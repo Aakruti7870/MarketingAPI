@@ -1,6 +1,6 @@
 """Cashfree Payment Gateway billing for GOLD-e AI Pro plans.
 
-Secrets are read only from the runtime environment / Secret Manager. Browser
+Secrets are read only from runtime environment / Secret Manager. Browser
 returns never activate a subscription: activation requires either a verified
 Cashfree webhook or a server-to-server Get Order verification.
 """
@@ -11,6 +11,7 @@ import hashlib
 import hmac
 import json
 import os
+import re
 import time
 import uuid
 from datetime import datetime, timezone
@@ -18,6 +19,7 @@ from datetime import datetime, timezone
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field
+from pymongo.errors import DuplicateKeyError
 
 from core import audit, db, get_current_user, now_iso, oid, require_role
 
@@ -97,9 +99,17 @@ def _period_end(interval: str) -> str:
     else:
         year = current.year + (1 if current.month == 12 else 0)
         month = 1 if current.month == 12 else current.month + 1
-        days = [31, 29 if year % 4 == 0 and (year % 100 != 0 or year % 400 == 0) else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+        leap = year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+        days = [31, 29 if leap else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
         end = current.replace(year=year, month=month, day=min(current.day, days[month - 1]))
     return end.isoformat()
+
+
+def _normalize_phone(value: str) -> str:
+    digits = re.sub(r"[^0-9]", "", value or "")
+    if len(digits) < 10 or len(digits) > 15:
+        raise HTTPException(status_code=400, detail="Enter a valid billing mobile number including country code")
+    return digits
 
 
 def _public_order(row: dict) -> dict:
@@ -120,7 +130,7 @@ def _public_order(row: dict) -> dict:
 
 class CheckoutIn(BaseModel):
     interval: str
-    customer_phone: str = Field(min_length=8, max_length=20)
+    customer_phone: str = Field(min_length=8, max_length=24)
 
 
 async def _create_provider_order(local: dict, user: dict, customer_phone: str) -> dict:
@@ -130,6 +140,8 @@ async def _create_provider_order(local: dict, user: dict, customer_phone: str) -
             "cf_order_id": f"cf_sim_{local['id']}",
             "payment_session_id": f"session_sim_{local['id']}",
             "order_status": "ACTIVE",
+            "order_amount": local["amount"],
+            "order_currency": "INR",
         }
 
     payload = {
@@ -172,6 +184,7 @@ async def _create_provider_order(local: dict, user: dict, customer_phone: str) -
 @router.post("/checkout")
 async def create_checkout(body: CheckoutIn, user: dict = Depends(require_role("owner", "admin"))):
     amount = _price(body.interval)
+    customer_phone = _normalize_phone(body.customer_phone)
     local_id = oid()
     cashfree_order_id = f"golde_{local_id}"
     doc = {
@@ -190,7 +203,7 @@ async def create_checkout(body: CheckoutIn, user: dict = Depends(require_role("o
     }
     await db.billing_orders.insert_one(dict(doc))
     try:
-        provider = await _create_provider_order(doc, user, body.customer_phone.strip())
+        provider = await _create_provider_order(doc, user, customer_phone)
     except Exception:
         await db.billing_orders.update_one(
             {"id": local_id, "workspace_id": user["workspace_id"]},
@@ -274,7 +287,7 @@ async def _activate_paid_order(order: dict, payment: dict, provider_status: str 
     await db.coin_ledger.insert_one({
         "id": oid(),
         "workspace_id": order["workspace_id"],
-        "direction": "credit",
+        "direction": "grant",
         "coins": 2000,
         "action": "pro_activation",
         "actor": "cashfree",
@@ -337,6 +350,7 @@ async def cashfree_webhook(request: Request):
     event_key = request.headers.get("x-idempotency-key") or f"{event_type}:{order_id}:{payment_id}"
     try:
         await db.billing_webhook_events.insert_one({
+            "_id": event_key,
             "id": oid(),
             "event_key": event_key,
             "workspace_id": local["workspace_id"],
@@ -344,15 +358,16 @@ async def cashfree_webhook(request: Request):
             "event_type": event_type,
             "created_at": now_iso(),
         })
-    except Exception as exc:
-        if "duplicate" in str(exc).lower() or "E11000" in str(exc):
-            return Response("ok", status_code=200)
-        raise
+    except DuplicateKeyError:
+        return Response("ok", status_code=200)
 
     amount = float(provider_order.get("order_amount") or 0)
     currency = str(provider_order.get("order_currency") or "")
     if round(amount, 2) != round(float(local["amount"]), 2) or currency != "INR":
-        await db.billing_orders.update_one({"id": local["id"]}, {"$set": {"status": "amount_mismatch", "updated_at": now_iso()}})
+        await db.billing_orders.update_one(
+            {"id": local["id"]},
+            {"$set": {"status": "amount_mismatch", "updated_at": now_iso()}},
+        )
         raise HTTPException(status_code=400, detail="Cashfree order amount/currency mismatch")
 
     status = str(payment.get("payment_status") or "").upper()
@@ -366,9 +381,15 @@ async def cashfree_webhook(request: Request):
     return Response("ok", status_code=200)
 
 
-async def _get_provider_order(order_id: str) -> dict:
+async def _get_provider_order(order_id: str, local: dict) -> dict:
     if SIMULATION_ENABLED:
-        return {"order_id": order_id, "order_status": "PAID"}
+        return {
+            "order_id": order_id,
+            "order_status": "PAID",
+            "order_amount": local["amount"],
+            "order_currency": "INR",
+            "cf_order_id": f"cf_verify_{local['id']}",
+        }
     async with httpx.AsyncClient(timeout=30.0) as client:
         response = await client.get(f"{_base_url()}/orders/{order_id}", headers=_headers())
         if response.status_code >= 400:
@@ -384,10 +405,24 @@ async def verify_order(billing_order_id: str, user: dict = Depends(require_role(
     order = await db.billing_orders.find_one({"id": billing_order_id, "workspace_id": user["workspace_id"]})
     if not order:
         raise HTTPException(status_code=404, detail="Billing order not found")
-    provider = await _get_provider_order(order["cashfree_order_id"])
+    provider = await _get_provider_order(order["cashfree_order_id"], order)
+
+    amount = float(provider.get("order_amount") or 0)
+    currency = str(provider.get("order_currency") or "")
+    if round(amount, 2) != round(float(order["amount"]), 2) or currency != "INR":
+        await db.billing_orders.update_one(
+            {"id": order["id"]},
+            {"$set": {"status": "amount_mismatch", "updated_at": now_iso()}},
+        )
+        raise HTTPException(status_code=409, detail="Cashfree order amount/currency mismatch")
+
     provider_status = str(provider.get("order_status") or "").upper()
     if provider_status == "PAID":
-        await _activate_paid_order(order, {"cf_payment_id": provider.get("cf_order_id") or "verified-order"}, provider_status="PAID")
+        await _activate_paid_order(
+            order,
+            {"cf_payment_id": provider.get("cf_order_id") or "verified-order"},
+            provider_status="PAID",
+        )
     else:
         await db.billing_orders.update_one(
             {"id": order["id"], "status": {"$ne": "paid"}},
