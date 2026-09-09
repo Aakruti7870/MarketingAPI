@@ -92,7 +92,7 @@ PRICING = {
         "save_percent": 16.7,
         "coins": PRO_MONTHLY_COINS,
         "coin_policy": "monthly_refresh",
-        "description": "Best value for teams using GOLD-e as an ongoing revenue operating system.",
+        "description": "Best value for teams using GOLD-e as an ongoing AI revenue operating system.",
         "features": [
             "2,000 coins refreshed every month (24,000/year)",
             "Everything in Pro Monthly",
@@ -141,7 +141,7 @@ async def ensure_wallet(workspace_id: str) -> dict:
             })
 
     if updates:
-        await db.workspaces.update_one({"id": workspace_id}, {"$set": updates)
+        await db.workspaces.update_one({"id": workspace_id}, {"$set": updates})
         workspace.update(updates)
 
     if plan == "Pro" and workspace.get("subscription_status") == "active":
@@ -264,7 +264,5 @@ async def upgrade_intent(body: UpgradeIntent, user: dict = Depends(get_current_u
     }
 
 
-# Mounted last so Cashfree can reuse the billing contract without exposing its
-# secret-bearing implementation to frontend code.
 from cashfree_billing import router as cashfree_router  # noqa: E402
 router.include_router(cashfree_router)
