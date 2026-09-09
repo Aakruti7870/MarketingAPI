@@ -29,6 +29,7 @@ import core
 import flows
 import privacy
 import production_ai
+import production_guardrails
 import saas
 import secure_team
 import secure_vault
@@ -59,12 +60,15 @@ _remove_route("/api/dashboard", {"GET"})
 _remove_route("/api/audit", {"GET"})
 _remove_route("/api/campaigns", {"POST"})
 _remove_route("/api/consent/opt-outs", {"GET"})
+_remove_route("/api/consent/leads/{lead_id}", {"POST"})
 _remove_route("/api/ai/generate", {"POST"})
 _remove_route("/api/ai/marketing", {"POST"})
 _remove_route("/api/ai/command", {"POST"})
 _remove_route("/api/ai/poster", {"POST"})
 _remove_route("/api/quotations/ai-draft", {"POST"})
 _remove_route("/api/leads/import", {"POST"})
+
+production_guardrails.install()
 
 app.include_router(secure_vault.router)
 app.include_router(secure_team.router)
@@ -75,6 +79,7 @@ app.include_router(production_ai.router)
 app.include_router(flows.router)
 app.include_router(contacts.router)
 app.include_router(channels.router)
+app.include_router(production_guardrails.router)
 
 
 def _env_bool(name: str, default: bool = False) -> bool:
