@@ -1,16 +1,17 @@
 import React, { useState } from "react";
 import { Check, Crown, X } from "lucide-react";
+import CashfreeCheckout from "./CashfreeCheckout";
 
 const PLANS = {
   monthly: [
     { name: "Free", price: "₹0", suffix: "forever", badge: "FREE", features: ["100 one-time coins", "1 workspace owner", "Up to 1,000 leads", "CRM, pipeline and inbox"] },
-    { name: "Pro Monthly", price: "₹1,999", suffix: "/ month", badge: "PRO", featured: true, features: ["2,000 coins every month", "Up to 10 team members", "Up to 10,000 leads", "AI Studio, Automations & WhatsApp", "Advanced analytics"] },
-    { name: "Pro Annual", price: "₹19,990", suffix: "/ year", badge: "BEST VALUE", features: ["2,000 coins refreshed monthly", "Everything in Pro Monthly", "Save 16.7%", "Priority support"] },
+    { name: "Pro Monthly", interval: "month", price: "₹1,999", suffix: "/ month", badge: "PRO", featured: true, features: ["2,000 coins every month", "Up to 10 team members", "Up to 10,000 leads", "AI Studio, Automations & WhatsApp", "Advanced analytics"] },
+    { name: "Pro Annual", interval: "year", price: "₹19,990", suffix: "/ year", badge: "BEST VALUE", features: ["2,000 coins refreshed monthly", "Everything in Pro Monthly", "Save 16.7%", "Priority support"] },
   ],
   annual: [
     { name: "Free", price: "₹0", suffix: "forever", badge: "FREE", features: ["100 one-time coins", "1 workspace owner", "Up to 1,000 leads", "CRM, pipeline and inbox"] },
-    { name: "Pro Annual", price: "₹19,990", suffix: "/ year", badge: "SAVE 16.7%", featured: true, features: ["2,000 coins refreshed monthly", "24,000 coins across the year", "Up to 10 team members", "AI Studio, Automations & WhatsApp", "Priority support"] },
-    { name: "Pro Monthly", price: "₹1,999", suffix: "/ month", badge: "FLEXIBLE", features: ["2,000 coins every month", "No annual commitment", "Up to 10 team members", "Advanced analytics"] },
+    { name: "Pro Annual", interval: "year", price: "₹19,990", suffix: "/ year", badge: "SAVE 16.7%", featured: true, features: ["2,000 coins refreshed monthly", "24,000 coins across the year", "Up to 10 team members", "AI Studio, Automations & WhatsApp", "Priority support"] },
+    { name: "Pro Monthly", interval: "month", price: "₹1,999", suffix: "/ month", badge: "FLEXIBLE", features: ["2,000 coins every month", "No annual commitment", "Up to 10 team members", "Advanced analytics"] },
   ],
 };
 
@@ -47,13 +48,21 @@ export default function UpgradeModal({ open, onClose }) {
               <div className="space-y-3">
                 {plan.features.map((feature) => <div key={feature} className="flex gap-2 text-sm text-slate-600"><span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-600"><Check className="h-3 w-3" /></span><span>{feature}</span></div>)}
               </div>
-              <button className={`mt-auto rounded-xl px-4 py-3 text-sm font-extrabold transition ${plan.featured ? "brand-gradient text-white shadow-brand" : "border border-slate-200 bg-white text-slate-700 hover:border-violet-200"}`}>
-                {plan.name === "Free" ? "Current Plan" : "Coming Soon"}
-              </button>
+              {plan.name === "Free" ? (
+                <button disabled className="mt-auto rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-extrabold text-slate-400">Current Plan</button>
+              ) : (
+                <CashfreeCheckout
+                  interval={plan.interval}
+                  onStarted={onClose}
+                  className={`mt-auto rounded-xl px-4 py-3 text-sm font-extrabold transition ${plan.featured ? "brand-gradient text-white shadow-brand" : "border border-slate-200 bg-white text-slate-700 hover:border-violet-200"}`}
+                >
+                  Upgrade with Cashfree
+                </CashfreeCheckout>
+              )}
             </article>
           ))}
         </div>
-        <p className="px-6 pb-6 text-center text-[11px] text-slate-400">Paid checkout remains disabled until the verified payment flow is connected. Taxes and provider charges may apply separately.</p>
+        <p className="px-6 pb-6 text-center text-[11px] text-slate-400">Pro activates only after Cashfree webhook or server-side order verification. Taxes and provider charges may apply separately.</p>
       </section>
     </div>
   );
