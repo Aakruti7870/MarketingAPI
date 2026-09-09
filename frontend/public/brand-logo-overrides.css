@@ -35,17 +35,17 @@
 }
 
 /* Auth page desktop brand block. */
-.landing-shell > .relative.mx-auto.grid > div:first-child > div.relative.flex.items-center.gap-3:first-of-type {
+.landing-shell > .relative.mx-auto.grid > div:first-child > div.relative.flex.items-center.gap-3 {
   width: 156px;
   height: 156px;
   overflow: visible;
 }
 
-.landing-shell > .relative.mx-auto.grid > div:first-child > div.relative.flex.items-center.gap-3:first-of-type > * {
+.landing-shell > .relative.mx-auto.grid > div:first-child > div.relative.flex.items-center.gap-3 > * {
   display: none !important;
 }
 
-.landing-shell > .relative.mx-auto.grid > div:first-child > div.relative.flex.items-center.gap-3:first-of-type::before {
+.landing-shell > .relative.mx-auto.grid > div:first-child > div.relative.flex.items-center.gap-3::before {
   content: '';
   display: block;
   width: 150px;
