@@ -1,8 +1,7 @@
 """Channel & integration hub for GOLD-e AI.
 
-This module centralizes workspace connection state. WhatsApp keeps using the
-existing live Meta connection; other providers are stored encrypted and are
-reported as configured until a provider-specific delivery adapter verifies them.
+Workspace credentials are encrypted at rest. A connection is marked Live only
+after a provider adapter has completed a successful send/verification.
 """
 from typing import Any
 
@@ -15,8 +14,8 @@ router = APIRouter(prefix="/api/channels", tags=["channels"])
 
 CHANNELS: dict[str, dict[str, Any]] = {
     "whatsapp": {"name": "WhatsApp", "group": "Messaging", "provider": "Meta Cloud API", "fields": []},
-    "email": {"name": "Email", "group": "Messaging", "provider": "SMTP / API", "fields": ["provider", "host", "port", "username", "password", "from_email", "api_key"]},
-    "sms": {"name": "SMS", "group": "Messaging", "provider": "MSG91 / API", "fields": ["provider", "auth_key", "sender_id", "template_id", "base_url"]},
+    "email": {"name": "Email", "group": "Messaging", "provider": "SMTP", "fields": ["host", "port", "security", "username", "password", "from_email"]},
+    "sms": {"name": "SMS", "group": "Messaging", "provider": "MSG91", "fields": ["auth_key", "sender_id", "template_id", "base_url", "route", "country"]},
     "instagram": {"name": "Instagram", "group": "Messaging", "provider": "Meta API", "fields": ["instagram_account_id", "page_id", "access_token", "app_secret"]},
     "facebook": {"name": "Facebook", "group": "Messaging", "provider": "Meta API", "fields": ["page_id", "page_access_token", "app_secret"]},
     "website-chat": {"name": "Website Chat", "group": "Messaging", "provider": "GOLD-e Widget", "fields": ["site_name", "allowed_origin"]},
@@ -38,18 +37,27 @@ class ChannelIn(BaseModel):
     fields: dict[str, str] = Field(default_factory=dict)
 
 
+class ChannelTestSendIn(BaseModel):
+    lead_id: str
+    channel: str
+    body: str = "GOLD-e AI provider verification message"
+
+
 def _public_generic(slug: str, definition: dict, doc: dict | None) -> dict:
     configured = bool(doc and doc.get("enabled", True))
+    verified = bool(configured and (doc or {}).get("last_verified_at"))
     field_names = sorted((doc or {}).get("fields_enc", {}).keys())
     return {
         "id": slug,
         **definition,
         "connected": configured,
-        "status": "configured" if configured else "setup_required",
+        "status": "live" if verified else "configured" if configured else "setup_required",
         "label": (doc or {}).get("label", ""),
         "configured_fields": field_names,
         "updated_at": (doc or {}).get("updated_at"),
-        "note": "Credentials saved securely. Provider delivery is enabled only where a live adapter is available.",
+        "last_verified_at": (doc or {}).get("last_verified_at"),
+        "last_error": (doc or {}).get("last_error"),
+        "note": "Provider verified by a successful live send." if verified else "Credentials saved securely. Run a controlled test send to verify the provider." if configured else "Add provider credentials to connect this channel.",
     }
 
 
@@ -69,11 +77,27 @@ async def list_channels(user: dict = Depends(get_current_user)):
                 "label": "Primary WABA" if connected else "",
                 "configured_fields": ["phone_number_id", "waba_id"] if connected else [],
                 "updated_at": whatsapp.get("updated_at") if whatsapp else None,
+                "last_verified_at": whatsapp.get("updated_at") if connected else None,
+                "last_error": None,
                 "note": "Live Meta WhatsApp Cloud API connection." if connected else "Connect Meta WhatsApp Cloud API credentials.",
             })
         else:
             output.append(_public_generic(slug, definition, by_slug.get(slug)))
     return output
+
+
+@router.post("/test-send")
+async def test_send(body: ChannelTestSendIn, user: dict = Depends(get_current_user)):
+    channel = body.channel.strip()
+    if channel.lower() not in {"whatsapp", "email", "sms"}:
+        raise HTTPException(status_code=400, detail="This channel does not have a live delivery adapter yet")
+    lead = await db.leads.find_one({"id": body.lead_id, "workspace_id": user["workspace_id"]})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    from multichannel import send_via_channel
+    return await send_via_channel(
+        user["workspace_id"], lead, channel, body.body, actor=user.get("name", "user")
+    )
 
 
 @router.get("/{slug}")
@@ -108,6 +132,8 @@ async def save_channel(slug: str, body: ChannelIn, user: dict = Depends(require_
         "label": body.label.strip() or (existing or {}).get("label", ""), "enabled": body.enabled,
         "fields_enc": fields_enc,
         "field_kinds": field_kinds,
+        "last_verified_at": None if supplied else (existing or {}).get("last_verified_at"),
+        "last_error": None,
         "updated_at": now_iso(), "updated_by": user.get("id"),
     }
     await db.channel_connections.update_one(

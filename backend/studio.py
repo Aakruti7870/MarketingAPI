@@ -8,7 +8,7 @@ from autopilot import schedule_followups, stop_followups
 from consent import can_send
 from contacts import resolve_audience_leads
 from core import audit, clean, db, get_current_user, now_iso, oid, render_vars, require_role
-from whatsapp import send_via_channel
+from multichannel import send_via_channel
 
 router = APIRouter(prefix="/api/studio")
 
@@ -47,11 +47,6 @@ async def resolve_segment_audience(workspace_id: str, segment: str):
 
 
 async def resolve_campaign_audience(workspace_id: str, campaign: dict):
-    """Resolve saved audiences first; fall back to legacy temperature segments.
-
-    `resolve_audience_leads` validates workspace ownership and deduplicates contacts
-    appearing in more than one saved audience.
-    """
     audience_ids = list(dict.fromkeys(campaign.get("audience_ids") or []))
     if audience_ids:
         return await resolve_audience_leads(workspace_id, audience_ids)
@@ -75,7 +70,6 @@ async def _live_report(workspace_id: str, campaign_id: str) -> dict:
 
 
 async def execute_campaign(campaign: dict, actor: str) -> dict:
-    """Execute an approved/scheduled campaign once using an atomic state claim."""
     ws = campaign["workspace_id"]
     cid = campaign["id"]
     claim = await db.campaigns.update_one(
@@ -89,8 +83,6 @@ async def execute_campaign(campaign: dict, actor: str) -> dict:
     try:
         audience = await resolve_campaign_audience(ws, campaign)
     except Exception:
-        # An audience should have been validated at create/update time. If it was
-        # deleted or corrupted later, do not leave the campaign stuck in sending.
         await db.campaigns.update_one(
             {"id": cid, "workspace_id": ws, "status": "sending"},
             {"$set": {"status": "failed", "failed_at": now_iso(), "failure_code": "audience_resolution_failed"}},
@@ -124,7 +116,6 @@ async def execute_campaign(campaign: dict, actor: str) -> dict:
             if followup.get("enabled") and followup.get("steps"):
                 await schedule_followups(ws, campaign, lead)
 
-    # Never claim delivery unless the provider/webhook actually reported it.
     stats = {
         "audience": len(audience),
         "sent": counters["sent"] + counters["delivered"] + counters["read"],
@@ -149,7 +140,6 @@ async def execute_campaign(campaign: dict, actor: str) -> dict:
 
 
 async def run_scheduled_campaigns(limit: int = 20) -> dict:
-    """Run due scheduled campaigns; safe to call repeatedly from Cloud Scheduler."""
     due = await db.campaigns.find({
         "status": "scheduled",
         "schedule_at": {"$lte": now_iso()},
@@ -257,8 +247,6 @@ async def approve(cid: str, user: dict = Depends(require_role("owner", "admin"))
     campaign = await db.campaigns.find_one({"id": cid, "workspace_id": user["workspace_id"]})
     if not campaign:
         raise HTTPException(404, "Campaign not found")
-    # Re-resolve immediately before approval so a deleted/changed saved audience
-    # cannot silently approve a campaign with stale targeting metadata.
     await resolve_campaign_audience(user["workspace_id"], campaign)
     status = "scheduled" if campaign.get("schedule_at") and campaign["schedule_at"] > now_iso() else "approved"
     await db.campaigns.update_one(
