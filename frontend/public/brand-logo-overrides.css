@@ -1,0 +1,135 @@
+/* GOLD-e AI 2026 portal logo placement.
+   Keep the full artwork visible: transparent canvas, no border, no crop. */
+
+:root {
+  --golde-logo-url: url('/gold-e-ai-logo-2026.webp?v=1');
+}
+
+/* Landing-page navigation brand: the artwork already contains name + tagline. */
+.landing-shell > header > .mx-auto {
+  height: 96px !important;
+}
+
+.landing-shell > header > .mx-auto > a[href='/'] {
+  display: flex !important;
+  height: 96px;
+  width: 104px;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: visible;
+}
+
+.landing-shell > header > .mx-auto > a[href='/'] > * {
+  display: none !important;
+}
+
+.landing-shell > header > .mx-auto > a[href='/']::before {
+  content: '';
+  display: block;
+  width: 92px;
+  height: 92px;
+  flex: 0 0 92px;
+  background: var(--golde-logo-url) center / contain no-repeat transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+/* Auth page desktop brand block. */
+.landing-shell > .relative.mx-auto.grid > div:first-child > div.relative.flex.items-center.gap-3 {
+  width: 156px;
+  height: 156px;
+  overflow: visible;
+}
+
+.landing-shell > .relative.mx-auto.grid > div:first-child > div.relative.flex.items-center.gap-3 > * {
+  display: none !important;
+}
+
+.landing-shell > .relative.mx-auto.grid > div:first-child > div.relative.flex.items-center.gap-3::before {
+  content: '';
+  display: block;
+  width: 150px;
+  height: 150px;
+  background: var(--golde-logo-url) center / contain no-repeat transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+/* Auth page mobile brand block. */
+.landing-shell > .relative.mx-auto.grid > div:last-child .mb-8.flex.items-center.gap-3 {
+  width: 108px;
+  height: 108px;
+  overflow: visible;
+}
+
+.landing-shell > .relative.mx-auto.grid > div:last-child .mb-8.flex.items-center.gap-3 > * {
+  display: none !important;
+}
+
+.landing-shell > .relative.mx-auto.grid > div:last-child .mb-8.flex.items-center.gap-3::before {
+  content: '';
+  display: block;
+  width: 104px;
+  height: 104px;
+  background: var(--golde-logo-url) center / contain no-repeat transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+/* Workspace sidebar: applies to every authenticated portal page. */
+.workspace-sidebar > div:first-child {
+  height: 104px !important;
+  min-height: 104px;
+}
+
+.workspace-sidebar > div:first-child > button:first-child {
+  width: 104px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: visible;
+}
+
+.workspace-sidebar > div:first-child > button:first-child > * {
+  display: none !important;
+}
+
+.workspace-sidebar > div:first-child > button:first-child::before {
+  content: '';
+  display: block;
+  width: 92px;
+  height: 92px;
+  flex: 0 0 92px;
+  background: var(--golde-logo-url) center / contain no-repeat transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+/* Never let the actual logo asset be clipped by generic image rules. */
+img[src*='gold-e-ai-logo-2026'] {
+  object-fit: contain !important;
+  object-position: center !important;
+  max-width: 100%;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+@media (max-width: 639px) {
+  .landing-shell > header > .mx-auto {
+    height: 84px !important;
+  }
+
+  .landing-shell > header > .mx-auto > a[href='/'] {
+    width: 88px;
+    height: 84px;
+  }
+
+  .landing-shell > header > .mx-auto > a[href='/']::before {
+    width: 80px;
+    height: 80px;
+    flex-basis: 80px;
+  }
+}
