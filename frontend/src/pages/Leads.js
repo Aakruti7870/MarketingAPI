@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import api, { apiError } from "../api";
 import { Button, Card, Badge, Modal, Input, Select, Textarea, EmptyState } from "../components/ui";
-import { Plus, Upload, Search, Sparkles, Trash2, RefreshCw, Users, Lock, Phone, Mail } from "lucide-react";
+import { Plus, Upload, Search, Sparkles, Trash2, Users, Lock, Mail } from "lucide-react";
 import { toast } from "sonner";
 
 const empty = { name: "", company: "", email: "", phone: "", channel: "WhatsApp", source: "Manual", budget: "", notes: "" };
@@ -40,15 +40,22 @@ export default function Leads() {
     setSaving(false);
   };
 
-  const importCsv = async (e) => {
+  const importContacts = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
+    const lower = file.name.toLowerCase();
+    if (!lower.endsWith(".csv") && !lower.endsWith(".xlsx")) {
+      toast.error("Upload a CSV or XLSX file");
+      e.target.value = "";
+      return;
+    }
     const fd = new FormData();
     fd.append("file", file);
-    toast.loading("Importing & scoring…", { id: "imp" });
+    fd.append("country_code", "+91");
+    toast.loading("Importing, deduplicating & scoring…", { id: "imp" });
     try {
       const { data } = await api.post("/leads/import", fd, { headers: { "Content-Type": "multipart/form-data" } });
-      toast.success(`Imported ${data.imported} leads (${data.skipped} skipped)`, { id: "imp" });
+      toast.success(`Imported ${data.imported} contacts · ${data.skipped} skipped · consent pending`, { id: "imp", duration: 5500 });
       load();
     } catch (err) { toast.error(apiError(err.response?.data?.detail), { id: "imp" }); }
     e.target.value = "";
@@ -70,11 +77,11 @@ export default function Leads() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-slate-900">Lead Engine</h1>
-          <p className="text-slate-500 text-sm mt-1">Import → validate → AI score → assign. Numbers stay private.</p>
+          <p className="text-slate-500 text-sm mt-1">CSV/XLSX import → normalize +91 → deduplicate → AI score. Bulk imports stay consent-pending until explicitly opted in.</p>
         </div>
         <div className="flex gap-2">
-          <input type="file" accept=".csv" ref={fileRef} onChange={importCsv} className="hidden" data-testid="csv-input" />
-          <Button variant="outline" onClick={() => fileRef.current?.click()} data-testid="import-btn"><Upload className="w-4 h-4" /> Import CSV</Button>
+          <input type="file" accept=".csv,.xlsx" ref={fileRef} onChange={importContacts} className="hidden" data-testid="csv-input" />
+          <Button variant="outline" onClick={() => fileRef.current?.click()} data-testid="import-btn"><Upload className="w-4 h-4" /> Import CSV / XLSX</Button>
           <Button onClick={() => setAddOpen(true)} data-testid="add-lead-btn"><Plus className="w-4 h-4" /> New Lead</Button>
         </div>
       </div>
@@ -98,7 +105,7 @@ export default function Leads() {
         {!leads ? (
           <div className="p-6 space-y-3">{[...Array(5)].map((_, i) => <div key={i} className="h-12 shimmer rounded-xl" />)}</div>
         ) : leads.length === 0 ? (
-          <EmptyState icon={Users} title="No leads yet" sub="Add a lead manually or import a CSV to get started." action={<Button onClick={() => setAddOpen(true)}><Plus className="w-4 h-4" /> New Lead</Button>} />
+          <EmptyState icon={Users} title="No leads yet" sub="Add a lead manually or import CSV/XLSX to get started." action={<Button onClick={() => setAddOpen(true)}><Plus className="w-4 h-4" /> New Lead</Button>} />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm" data-testid="leads-table">
