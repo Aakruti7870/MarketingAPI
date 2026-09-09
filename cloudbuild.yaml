@@ -53,6 +53,27 @@ steps:
       - --set-env-vars=APP_ENV=production,DB_NAME=marketingapi,ENABLE_SIMULATION=false,ENABLE_IN_PROCESS_AUTOPILOT=false,OPENAI_MODEL=gpt-5,OPENAI_IMAGE_MODEL=gpt-image-1.5,ALLOWED_ORIGINS=${_PUBLIC_ORIGIN}
       - --set-secrets=MONGO_URL=MARKETINGAPI_MONGO_URL:latest,JWT_SECRET=MARKETINGAPI_JWT_SECRET:latest,VAULT_KEY=MARKETINGAPI_VAULT_KEY:latest,OPENAI_API_KEY=MARKETINGAPI_OPENAI_API_KEY:latest,META_WEBHOOK_VERIFY_TOKEN=MARKETINGAPI_META_WEBHOOK_VERIFY_TOKEN:latest,CRON_SECRET=MARKETINGAPI_CRON_SECRET:latest
 
+  - id: verify-cloud-run
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        SERVICE_URL="$(gcloud run services describe '${_SERVICE}' --region '${_REGION}' --format='value(status.url)')"
+        echo "Verifying Cloud Run: $${SERVICE_URL}"
+        for attempt in $(seq 1 30); do
+          if BODY="$$(curl -fsS --max-time 15 "$${SERVICE_URL}/api/health" 2>/dev/null)"; then
+            echo "$$BODY"
+            echo "$$BODY" | grep -q '"status":"ok"'
+            echo "$$BODY" | grep -q '"database":"ok"'
+            exit 0
+          fi
+          echo "Cloud Run health attempt $$attempt/30 not ready"
+          sleep 2
+        done
+        echo "Cloud Run did not become healthy"
+        exit 1
+
   - id: configure-scheduler
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
     entrypoint: bash
@@ -106,6 +127,30 @@ steps:
       - --only
       - hosting
       - --non-interactive
+
+  - id: verify-public-release
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        echo "Verifying public release at ${_PUBLIC_ORIGIN}"
+        for attempt in $(seq 1 30); do
+          if HEALTH="$$(curl -fsS --max-time 15 '${_PUBLIC_ORIGIN}/api/health' 2>/dev/null)"; then
+            echo "$$HEALTH"
+            echo "$$HEALTH" | grep -q '"status":"ok"'
+            echo "$$HEALTH" | grep -q '"database":"ok"'
+            VERSION="$$(curl -fsS --max-time 15 '${_PUBLIC_ORIGIN}/api/version')"
+            echo "$$VERSION"
+            echo "$$VERSION" | grep -q '"environment":"production"'
+            echo "Production release verified end to end."
+            exit 0
+          fi
+          echo "Public health attempt $$attempt/30 not ready"
+          sleep 2
+        done
+        echo "Public Firebase -> Cloud Run release verification failed"
+        exit 1
 
 availableSecrets:
   secretManager:
