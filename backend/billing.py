@@ -1,12 +1,9 @@
-"""Pricing, coin wallet, and billing intent APIs.
+"""Pricing, coin wallet, and billing APIs.
 
 Launch model:
 - Free: 100 one-time coins. They never reset.
 - Pro Monthly: INR 1,999/month with 2,000 coins refreshed monthly.
 - Pro Annual: INR 19,990/year with the same 2,000-coin monthly refresh.
-
-Subscription activation remains server-controlled. A payment provider/webhook can later
-activate Pro without changing the pricing/entitlement contract in this module.
 """
 from datetime import datetime, timezone
 
@@ -144,10 +141,9 @@ async def ensure_wallet(workspace_id: str) -> dict:
             })
 
     if updates:
-        await db.workspaces.update_one({"id": workspace_id}, {"$set": updates})
+        await db.workspaces.update_one({"id": workspace_id}, {"$set": updates)
         workspace.update(updates)
 
-    # Paid plans get a controlled monthly refresh even when billed annually.
     if plan == "Pro" and workspace.get("subscription_status") == "active":
         current_period = _period_key()
         if workspace.get("coin_period") != current_period:
@@ -257,12 +253,18 @@ async def upgrade_intent(body: UpgradeIntent, user: dict = Depends(get_current_u
         "requested_by": user.get("id"),
         "plan": "Pro",
         "interval": body.interval,
-        "status": "pending_checkout",
+        "status": "checkout_available",
         "created_at": now_iso(),
     })
     return {
         "id": request_id,
-        "status": "pending_checkout",
-        "checkout_ready": False,
-        "message": "Plan selected. Payment checkout must be connected before subscription activation.",
+        "status": "checkout_available",
+        "checkout_ready": True,
+        "checkout_endpoint": "/api/billing/cashfree/checkout",
     }
+
+
+# Mounted last so Cashfree can reuse the billing contract without exposing its
+# secret-bearing implementation to frontend code.
+from cashfree_billing import router as cashfree_router  # noqa: E402
+router.include_router(cashfree_router)
