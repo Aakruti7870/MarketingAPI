@@ -34,6 +34,7 @@ import saas
 import secure_team
 import secure_vault
 import server
+import social
 import studio
 
 app = server.app
@@ -59,6 +60,7 @@ _remove_route("/api/team/{uid}", {"DELETE"})
 _remove_route("/api/dashboard", {"GET"})
 _remove_route("/api/audit", {"GET"})
 _remove_route("/api/campaigns", {"POST"})
+_remove_route("/api/conversations/{cid}/reply", {"POST"})
 _remove_route("/api/consent/opt-outs", {"GET"})
 _remove_route("/api/consent/leads/{lead_id}", {"POST"})
 _remove_route("/api/ai/generate", {"POST"})
@@ -79,6 +81,7 @@ app.include_router(production_ai.router)
 app.include_router(flows.router)
 app.include_router(contacts.router)
 app.include_router(channels.router)
+app.include_router(social.router)
 app.include_router(production_guardrails.router)
 
 
@@ -244,6 +247,56 @@ async def production_campaign_create(
     return await studio.create(studio_body, user)
 
 
+@app.post("/api/conversations/{cid}/reply")
+async def production_conversation_reply(
+    cid: str,
+    body: server.MessageIn,
+    user: dict = Depends(server.get_current_user),
+):
+    """Send a real provider reply, then return the mirrored inbox message."""
+    conversation = await server.db.conversations.find_one({
+        "id": cid,
+        "workspace_id": user["workspace_id"],
+    })
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    lead = await server.db.leads.find_one({
+        "id": conversation.get("lead_id"),
+        "workspace_id": user["workspace_id"],
+    })
+    if not lead:
+        raise HTTPException(status_code=404, detail="Conversation lead not found")
+
+    from multichannel import send_via_channel
+    result = await send_via_channel(
+        user["workspace_id"],
+        lead,
+        conversation.get("channel") or lead.get("channel") or "WhatsApp",
+        body.body,
+        actor=user.get("name", "user"),
+    )
+    if result.get("status") == "blocked":
+        raise HTTPException(status_code=409, detail={
+            "code": result.get("code"),
+            "message": result.get("reason") or "Consent Guard blocked this reply",
+        })
+    if result.get("status") == "failed":
+        raise HTTPException(status_code=502, detail={
+            "code": result.get("code") or "provider_send_failed",
+            "message": "Provider did not accept the message",
+        })
+
+    fresh = await server.db.conversations.find_one({"id": cid, "workspace_id": user["workspace_id"]})
+    messages = (fresh or {}).get("messages") or []
+    return messages[-1] if messages else {
+        "id": result.get("message_id"),
+        "from": "agent",
+        "author": user.get("name", "user"),
+        "body": body.body,
+        "at": server.now_iso(),
+    }
+
+
 @app.get("/api/consent/opt-outs")
 async def production_opt_outs(user: dict = Depends(server.get_current_user)):
     ws = user["workspace_id"]
@@ -267,13 +320,15 @@ async def production_indexes():
     """Indexes and one-way safety migration needed by the production service."""
     try:
         await secure_vault.migrate_legacy_plaintext_metadata()
-        # Pre-launch pricing migration: legacy prototype plan names become Free unless billing later activates Pro.
         await core.db.workspaces.update_many(
             {"plan": {"$in": ["Starter", "Growth", "Scale", "Enterprise"]}, "subscription_status": {"$ne": "active"}},
             {"$set": {"plan": "Free"}},
         )
         await core.db.whatsapp_connections.create_index("phone_number_id", unique=True, sparse=True)
         await core.db.channel_connections.create_index([("workspace_id", 1), ("channel", 1)], unique=True)
+        await core.db.messages.create_index([("workspace_id", 1), ("provider_id", 1)], sparse=True)
+        await core.db.leads.create_index([("workspace_id", 1), ("instagram_scoped_id_hash", 1)], unique=True, sparse=True)
+        await core.db.leads.create_index([("workspace_id", 1), ("facebook_psid_hash", 1)], unique=True, sparse=True)
         await core.db.followups.create_index(
             [("workspace_id", 1), ("followup_key", 1)], unique=True, sparse=True
         )
