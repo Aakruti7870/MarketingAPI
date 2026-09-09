@@ -37,6 +37,12 @@ class ChannelIn(BaseModel):
     fields: dict[str, str] = Field(default_factory=dict)
 
 
+class ChannelTestSendIn(BaseModel):
+    lead_id: str
+    channel: str
+    body: str = "GOLD-e AI provider verification message"
+
+
 def _public_generic(slug: str, definition: dict, doc: dict | None) -> dict:
     configured = bool(doc and doc.get("enabled", True))
     verified = bool(configured and (doc or {}).get("last_verified_at"))
@@ -78,6 +84,20 @@ async def list_channels(user: dict = Depends(get_current_user)):
         else:
             output.append(_public_generic(slug, definition, by_slug.get(slug)))
     return output
+
+
+@router.post("/test-send")
+async def test_send(body: ChannelTestSendIn, user: dict = Depends(get_current_user)):
+    channel = body.channel.strip()
+    if channel.lower() not in {"whatsapp", "email", "sms"}:
+        raise HTTPException(status_code=400, detail="This channel does not have a live delivery adapter yet")
+    lead = await db.leads.find_one({"id": body.lead_id, "workspace_id": user["workspace_id"]})
+    if not lead:
+        raise HTTPException(status_code=404, detail="Lead not found")
+    from multichannel import send_via_channel
+    return await send_via_channel(
+        user["workspace_id"], lead, channel, body.body, actor=user.get("name", "user")
+    )
 
 
 @router.get("/{slug}")
