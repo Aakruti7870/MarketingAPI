@@ -1,82 +1,86 @@
-/* GOLD-e AI official logo integration — supplied brand artwork */
+/* GOLD-e AI landing-page brand integration.
+ * UI uses the native transparent vector emblem; the raster lockup is reserved
+ * for social metadata only. This prevents pasted-image patches and duplicate
+ * wordmarks while keeping the supplied purple/pink/champagne visual language.
+ */
 :root {
-  --gold-e-logo-image: url('/gold-e-ai-logo.jpg');
+  --gold-e-emblem-image: url('/gold-e-ai-emblem.svg?v=4');
 }
 
-/*
- * The supplied artwork is a square JPG lockup that already contains
- * "GOLD-e AI / AI Revenue Engine". Small UI marks therefore crop to the
- * emblem only, while the surrounding UI owns the brand text. The image is
- * blended into the page instead of being shown as a pasted white patch.
+/* Every Landing.js BrandMark is the same h-9/w-9 component. Replace its
+ * placeholder Sparkles glyph with the crisp vector emblem, with no white tile.
  */
-.landing-shell .brand-gradient.h-9.w-9,
-.brand-gradient.h-10.w-10:has(> svg.lucide-sparkles),
-.brand-gradient.h-11.w-11:has(> svg.lucide-sparkles) {
+.landing-shell .brand-gradient.h-9.w-9 {
   position: relative;
   isolation: isolate;
-  background: transparent !important;
-  border: 1px solid rgba(139, 92, 246, 0.12);
-  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.12) !important;
-  overflow: hidden;
+  flex: 0 0 auto;
+  background: var(--gold-e-emblem-image) center / contain no-repeat !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
 }
 
-.landing-shell .brand-gradient.h-9.w-9::after,
-.brand-gradient.h-10.w-10:has(> svg.lucide-sparkles)::after,
-.brand-gradient.h-11.w-11:has(> svg.lucide-sparkles)::after {
-  content: '';
-  position: absolute;
-  inset: -8%;
-  z-index: 0;
-  background-image: var(--gold-e-logo-image);
-  background-repeat: no-repeat;
-  background-position: 14% 49%;
-  background-size: 218% 218%;
-  mix-blend-mode: multiply;
-  filter: saturate(1.14) contrast(1.04) brightness(1.03);
-}
-
-.landing-shell .brand-gradient.h-9.w-9 > svg.lucide-sparkles,
-.brand-gradient.h-10.w-10:has(> svg.lucide-sparkles) > svg,
-.brand-gradient.h-11.w-11:has(> svg.lucide-sparkles) > svg {
+.landing-shell .brand-gradient.h-9.w-9 > svg.lucide-sparkles {
   opacity: 0 !important;
 }
 
-/* Hero emblem: use only the emblem crop, never the embedded wordmark. */
+/* Give the compact emblem a controlled glow instead of a visible image box. */
+.landing-shell .brand-gradient.h-9.w-9::before {
+  content: '';
+  position: absolute;
+  inset: 14%;
+  z-index: -1;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(139, 92, 246, .18), rgba(236, 72, 153, .08) 48%, transparent 72%);
+  filter: blur(7px);
+}
+
+/* Hero branding: emblem only. The SVG itself is transparent, so the existing
+ * cyan/pink hero atmosphere remains visible through and around the mark.
+ */
+.landing-shell section#home > .relative.mx-auto.max-w-5xl.text-center {
+  isolation: isolate;
+}
+
 .landing-shell section#home > .relative.mx-auto.max-w-5xl.text-center::before {
   content: '';
   display: block;
-  width: clamp(118px, 14vw, 156px);
+  width: clamp(128px, 14vw, 170px);
   aspect-ratio: 1 / 1;
   margin: 0 auto 18px;
-  border: 1px solid rgba(255, 255, 255, 0.72);
-  border-radius: 34px;
-  background:
-    radial-gradient(circle at 28% 22%, rgba(255,255,255,.94), rgba(255,255,255,.46) 42%, rgba(237,233,254,.18) 72%, rgba(255,255,255,0) 100%);
-  box-shadow:
-    0 24px 70px rgba(103, 58, 183, 0.11),
-    inset 0 1px 0 rgba(255,255,255,.9);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: var(--gold-e-emblem-image) center / contain no-repeat;
+  filter:
+    drop-shadow(0 18px 30px rgba(91, 80, 255, .14))
+    drop-shadow(0 6px 14px rgba(236, 75, 198, .10));
+  animation: gold-e-emblem-float 6s ease-in-out infinite;
 }
 
+/* Soft atmospheric halo only — no card, border, square, or image patch. */
 .landing-shell section#home > .relative.mx-auto.max-w-5xl.text-center::after {
   content: '';
   position: absolute;
-  top: -5px;
+  top: -22px;
   left: 50%;
-  width: clamp(106px, 13vw, 142px);
+  width: clamp(190px, 20vw, 250px);
   aspect-ratio: 1 / 1;
   transform: translateX(-50%);
+  z-index: -1;
   pointer-events: none;
-  background-image: var(--gold-e-logo-image);
-  background-repeat: no-repeat;
-  background-position: 14% 49%;
-  background-size: 218% 218%;
-  mix-blend-mode: multiply;
-  filter: saturate(1.16) contrast(1.05) brightness(1.04) drop-shadow(0 10px 26px rgba(124,58,237,.10));
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 35% 36%, rgba(105, 221, 255, .20), transparent 50%),
+    radial-gradient(circle at 68% 58%, rgba(245, 126, 212, .18), transparent 52%),
+    radial-gradient(circle, rgba(139, 92, 246, .09), transparent 68%);
+  filter: blur(18px);
 }
 
-/* Defensive mobile sizing: prevent badge/headline overflow on narrow screens. */
+@keyframes gold-e-emblem-float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-5px) scale(1.012); }
+}
+
+/* Defensive mobile sizing: keep the hero badge/headline inside narrow screens. */
 .landing-shell section#home > .relative.mx-auto.max-w-5xl.text-center > .mb-5.inline-flex {
   max-width: calc(100vw - 2.5rem);
   white-space: normal;
@@ -87,20 +91,25 @@
 
 .landing-shell section#home h1 {
   font-size: clamp(2.45rem, 10.5vw, 4.5rem) !important;
-  line-height: 0.98 !important;
+  line-height: .98 !important;
   max-width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-shell section#home > .relative.mx-auto.max-w-5xl.text-center::before {
+    animation: none;
+  }
 }
 
 @media (max-width: 640px) {
   .landing-shell section#home > .relative.mx-auto.max-w-5xl.text-center::before {
-    width: 112px;
+    width: 116px;
     margin-bottom: 14px;
-    border-radius: 28px;
   }
 
   .landing-shell section#home > .relative.mx-auto.max-w-5xl.text-center::after {
-    width: 102px;
-    top: -1px;
+    top: -14px;
+    width: 178px;
   }
 
   .landing-shell section#home {
