@@ -66,7 +66,7 @@ async def stop_followups(workspace_id: str, campaign_id: str, reason: str):
 
 async def run_due(limit: int = 200) -> dict:
     """Process due follow-ups once with atomic claims to prevent duplicate sends."""
-    from whatsapp import send_via_channel
+    from multichannel import send_via_channel
 
     due = await db.followups.find(
         {"status": "scheduled", "due_at": {"$lte": now_iso()}}
