@@ -1,29 +1,40 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import api, { apiError } from "../api";
 import { useAuth } from "../context/AuthContext";
 import { Button, Card, Badge, Modal, Input, Select, Textarea, EmptyState } from "../components/ui";
-import { Plus, Send, Trash2, Users, CheckCircle2, Reply, Clock, Sparkles, ShieldCheck, Eye, PlayCircle, PauseCircle, Zap, XCircle } from "lucide-react";
+import { Plus, Send, Trash2, Users, CheckCircle2, Reply, Sparkles, ShieldCheck, Eye, PlayCircle, PauseCircle, Zap, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
-const emptyForm = {
+const freshForm = () => ({
   name: "", objective: "Lead nurturing", channel: "WhatsApp", segment: "All Leads",
+  target_mode: "segment", audience_ids: [],
   message: "", cta1: "", cta1url: "", reply_buttons: "",
   fu_enabled: false, fu_unit: "days", fu_steps: [{ day: 2, message: "" }],
-};
+});
 
-const statusTone = (s) => ({ draft: "slate", approved: "blue", sending: "gold", sent: "green", Sent: "green", paused: "WARM", Scheduled: "gold" }[s] || "slate");
+const statusTone = (s) => ({ draft: "slate", approved: "blue", sending: "gold", sent: "green", Sent: "green", failed: "red", paused: "WARM", scheduled: "gold", Scheduled: "gold" }[s] || "slate");
 
 export default function Campaigns() {
   const { user } = useAuth();
   const canApprove = user?.role === "owner" || user?.role === "admin";
   const [items, setItems] = useState(null);
+  const [audiences, setAudiences] = useState([]);
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState(emptyForm);
+  const [form, setForm] = useState(freshForm);
   const [saving, setSaving] = useState(false);
   const [genning, setGenning] = useState(false);
   const [preview, setPreview] = useState(null);
 
-  const load = () => api.get("/campaigns").then((r) => setItems(r.data));
+  const audienceById = useMemo(() => Object.fromEntries(audiences.map((a) => [a.id, a])), [audiences]);
+  const load = async () => {
+    try {
+      const [campaignRes, audienceRes] = await Promise.all([api.get("/campaigns"), api.get("/audiences")]);
+      setItems(campaignRes.data);
+      setAudiences(audienceRes.data || []);
+    } catch (err) {
+      toast.error(apiError(err.response?.data?.detail) || "Campaign data could not be loaded");
+    }
+  };
   useEffect(() => { load(); }, []);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
@@ -38,20 +49,37 @@ export default function Campaigns() {
     setGenning(false);
   };
 
+  const toggleAudience = (id) => {
+    setForm((current) => ({
+      ...current,
+      audience_ids: current.audience_ids.includes(id)
+        ? current.audience_ids.filter((item) => item !== id)
+        : [...current.audience_ids, id],
+    }));
+  };
+
   const create = async (e) => {
     e.preventDefault();
+    if (form.target_mode === "saved" && form.audience_ids.length === 0) {
+      toast.error("Select at least one saved audience");
+      return;
+    }
     setSaving(true);
     const payload = {
-      name: form.name, objective: form.objective, channel: form.channel, segment: form.segment,
+      name: form.name,
+      objective: form.objective,
+      channel: form.channel,
+      segment: form.target_mode === "segment" ? form.segment : "All Leads",
+      audience_ids: form.target_mode === "saved" ? form.audience_ids : [],
       message: form.message,
       cta_buttons: form.cta1 ? [{ label: form.cta1, url: form.cta1url }] : [],
       reply_buttons: form.reply_buttons.split(",").map((s) => s.trim()).filter(Boolean),
       followup: { enabled: form.fu_enabled, time_unit: form.fu_unit, steps: form.fu_enabled ? form.fu_steps.filter((s) => s.message) : [] },
     };
     try {
-      await api.post("/studio/campaigns", payload);
-      toast.success("Campaign created as draft");
-      setOpen(false); setForm(emptyForm); load();
+      const { data } = await api.post("/studio/campaigns", payload);
+      toast.success(`Campaign created for ${data.stats?.audience ?? 0} contact${data.stats?.audience === 1 ? "" : "s"}`);
+      setOpen(false); setForm(freshForm()); load();
     } catch (err) { toast.error(apiError(err.response?.data?.detail)); }
     setSaving(false);
   };
@@ -76,10 +104,10 @@ export default function Campaigns() {
 
   return (
     <div className="p-6 md:p-8 space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-heading text-2xl md:text-3xl font-extrabold text-slate-900">Campaign Studio</h1>
-          <p className="text-slate-500 text-sm mt-1">Objective → audience → AI message → approval → consent-safe send → autopilot.</p>
+          <p className="text-slate-500 text-sm mt-1">Segment or saved audience → AI message → approval → consent-safe send → autopilot.</p>
         </div>
         <Button onClick={() => setOpen(true)} data-testid="new-campaign-btn"><Plus className="w-4 h-4" /> New Campaign</Button>
       </div>
@@ -90,18 +118,21 @@ export default function Campaigns() {
         <div className="grid md:grid-cols-2 gap-4">
           {items.map((c) => {
             const st = (c.status || "").toLowerCase();
+            const selectedNames = (c.audience_ids || []).map((id) => audienceById[id]?.name).filter(Boolean);
             return (
               <Card key={c.id} className="p-5 hover:shadow-hover transition" data-testid={`campaign-${c.id}`}>
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <h3 className="font-heading font-bold text-slate-900">{c.name}</h3>
                       <Badge tone={statusTone(c.status)}>{c.status}</Badge>
                     </div>
                     <p className="text-xs text-slate-500 mt-1">{c.objective || "Campaign"}</p>
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
                       <Badge tone="slate">{c.channel}</Badge>
-                      <Badge tone="blue">{c.segment}</Badge>
+                      {(c.audience_ids || []).length > 0
+                        ? <Badge tone="blue">{selectedNames.length ? selectedNames.join(" + ") : `${c.audience_ids.length} saved audience${c.audience_ids.length === 1 ? "" : "s"}`}</Badge>
+                        : <Badge tone="blue">{c.segment}</Badge>}
                       {c.followup?.enabled && <Badge tone="gold"><Zap className="w-3 h-3" /> Autopilot</Badge>}
                     </div>
                   </div>
@@ -129,7 +160,6 @@ export default function Campaigns() {
         </div>
       )}
 
-      {/* Builder */}
       <Modal open={open} onClose={() => setOpen(false)} title="New Campaign" className="max-w-2xl">
         <form onSubmit={create} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
@@ -138,8 +168,33 @@ export default function Campaigns() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <Select label="Channel" value={form.channel} onChange={set("channel")}>{["WhatsApp", "Email", "SMS", "Instagram"].map((c) => <option key={c}>{c}</option>)}</Select>
-            <Select label="Audience segment" value={form.segment} onChange={set("segment")}>{["All Leads", "HOT", "WARM", "COLD"].map((c) => <option key={c}>{c}</option>)}</Select>
+            <Select label="Audience source" value={form.target_mode} onChange={set("target_mode")}>
+              <option value="segment">Lead segment</option>
+              <option value="saved">Saved Broadcast audience</option>
+            </Select>
           </div>
+
+          {form.target_mode === "segment" ? (
+            <Select label="Audience segment" value={form.segment} onChange={set("segment")}>{["All Leads", "HOT", "WARM", "COLD"].map((c) => <option key={c}>{c}</option>)}</Select>
+          ) : (
+            <div>
+              <div className="mb-2 flex items-center justify-between gap-3"><span className="text-xs font-semibold text-slate-600">Saved audiences · choose one or more</span><span className="text-[11px] text-slate-400">Duplicates are removed automatically</span></div>
+              {audiences.length === 0 ? (
+                <div className="rounded-xl border border-dashed border-violet-200 bg-violet-50/50 p-4 text-sm text-slate-500">No saved audiences yet. Create one from Broadcast Audiences or during a contact import.</div>
+              ) : (
+                <div className="max-h-48 space-y-2 overflow-y-auto rounded-2xl border border-violet-100 bg-white/70 p-3">
+                  {audiences.map((audience) => {
+                    const checked = form.audience_ids.includes(audience.id);
+                    return <label key={audience.id} className={`flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2.5 transition ${checked ? "border-violet-300 bg-violet-50" : "border-slate-100 bg-white hover:border-violet-200"}`}>
+                      <input type="checkbox" checked={checked} onChange={() => toggleAudience(audience.id)} />
+                      <div className="min-w-0 flex-1"><div className="truncate text-sm font-bold text-slate-700">{audience.name}</div><div className="text-[11px] text-slate-400">{audience.kind} · {audience.member_count ?? 0} contacts</div></div>
+                    </label>;
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <span className="text-xs font-semibold text-slate-600">Message · use {"{{first_name}}"}, {"{{company}}"}</span>
@@ -182,7 +237,6 @@ export default function Campaigns() {
         </form>
       </Modal>
 
-      {/* Preview + consent breakdown */}
       <Modal open={!!preview} onClose={() => setPreview(null)} title="Pre-send Safety Preview">
         {preview && (
           <div className="space-y-4">
@@ -201,7 +255,7 @@ export default function Campaigns() {
                 {Object.entries(preview.block_reasons).map(([k, v]) => <span key={k} className="inline-block mr-2 px-2 py-1 rounded bg-amber-50 text-amber-700">{k}: {v}</span>)}
               </div>
             )}
-            <div className="flex items-center gap-2 text-xs text-emerald-700 p-2.5 rounded-lg bg-emerald-50"><ShieldCheck className="w-4 h-4" /> Consent Guard runs again at send time for every recipient.</div>
+            <div className="flex items-center gap-2 text-xs text-emerald-700 p-2.5 rounded-lg bg-emerald-50"><ShieldCheck className="w-4 h-4" /> Saved audiences are resolved again and Consent Guard runs again at send time for every recipient.</div>
           </div>
         )}
       </Modal>
