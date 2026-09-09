@@ -6,7 +6,7 @@ import ThemeToggle from "./ThemeToggle";
 import UpgradeModal from "./UpgradeModal";
 import {
   BarChart3, Bell, Bot, ChevronDown, ChevronRight, Code2, FileText, FolderOpen,
-  Gauge, GitBranch, History, Home, Kanban, KeyRound, LayoutDashboard, LogOut, Menu,
+  Gauge, GitBranch, History, Home, Kanban, KeyRound, LayoutDashboard, LogOut, Megaphone, Menu,
   MessageSquare, PanelLeftClose, Phone, Receipt, Search, Send, Settings,
   ShieldCheck, Sparkles, Users, UsersRound, WandSparkles, X, Zap,
 } from "lucide-react";
@@ -22,6 +22,7 @@ const AI_NAV = [
 const BUSINESS_NAV = [
   { name: "Dashboard", icon: LayoutDashboard, path: "/dashboard" },
   { name: "Lead Engine", icon: Users, path: "/leads", badge: "AI" },
+  { name: "Broadcast Audiences", icon: Megaphone, path: "/audiences", badge: "NEW" },
   { name: "Sales Pipeline", icon: Kanban, path: "/pipeline" },
   { name: "Unified Inbox", icon: MessageSquare, path: "/inbox" },
   { name: "Campaign Studio", icon: Send, path: "/campaigns" },
