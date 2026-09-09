@@ -315,6 +315,25 @@ async def production_opt_outs(user: dict = Depends(server.get_current_user)):
     return output
 
 
+async def _ensure_social_identity_index(field: str):
+    """Keep social IDs unique without indexing ordinary leads whose ID is null."""
+    name = f"workspace_id_1_{field}_1"
+    partial_filter = {field: {"$type": "string"}}
+    indexes = await core.db.leads.index_information()
+    current = indexes.get(name)
+    if current and (
+        not current.get("unique")
+        or current.get("partialFilterExpression") != partial_filter
+    ):
+        await core.db.leads.drop_index(name)
+    await core.db.leads.create_index(
+        [("workspace_id", 1), (field, 1)],
+        name=name,
+        unique=True,
+        partialFilterExpression=partial_filter,
+    )
+
+
 @app.on_event("startup")
 async def production_indexes():
     """Indexes and one-way safety migration needed by the production service."""
@@ -327,8 +346,8 @@ async def production_indexes():
         await core.db.whatsapp_connections.create_index("phone_number_id", unique=True, sparse=True)
         await core.db.channel_connections.create_index([("workspace_id", 1), ("channel", 1)], unique=True)
         await core.db.messages.create_index([("workspace_id", 1), ("provider_id", 1)], sparse=True)
-        await core.db.leads.create_index([("workspace_id", 1), ("instagram_scoped_id_hash", 1)], unique=True, sparse=True)
-        await core.db.leads.create_index([("workspace_id", 1), ("facebook_psid_hash", 1)], unique=True, sparse=True)
+        await _ensure_social_identity_index("instagram_scoped_id_hash")
+        await _ensure_social_identity_index("facebook_psid_hash")
         await core.db.followups.create_index(
             [("workspace_id", 1), ("followup_key", 1)], unique=True, sparse=True
         )
