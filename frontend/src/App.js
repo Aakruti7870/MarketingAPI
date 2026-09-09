@@ -16,6 +16,7 @@ import Leads from "./pages/Leads";
 import Pipeline from "./pages/Pipeline";
 import Inbox from "./pages/Inbox";
 import Campaigns from "./pages/Campaigns";
+import Audiences from "./pages/Audiences";
 import Templates from "./pages/Templates";
 import AIStudio from "./pages/AIStudio";
 import Automations from "./pages/Automations";
@@ -102,6 +103,7 @@ export default function App() {
             <Route path="/pipeline" element={<Protected><Pipeline /></Protected>} />
             <Route path="/inbox" element={<Protected><Inbox /></Protected>} />
             <Route path="/campaigns" element={<Protected><Campaigns /></Protected>} />
+            <Route path="/audiences" element={<Protected><Audiences /></Protected>} />
             <Route path="/templates" element={<Protected><Templates /></Protected>} />
             <Route path="/ai-studio" element={<Protected><AIStudio /></Protected>} />
             <Route path="/automations" element={<Protected><Automations /></Protected>} />
