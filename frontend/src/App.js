@@ -9,7 +9,8 @@ import ThemeToggle from "./components/ThemeToggle";
 import Landing from "./pages/Landing";
 import Auth from "./pages/Auth";
 import Assistant from "./pages/Assistant";
-import { ExplorePage, UseCasesPage, FilesPage, HistoryPage, SettingsPage } from "./pages/WorkspacePages";
+import { ExplorePage, UseCasesPage, FilesPage, HistoryPage } from "./pages/WorkspacePages";
+import SettingsPage from "./pages/Settings";
 import Dashboard from "./pages/Dashboard";
 import Leads from "./pages/Leads";
 import Pipeline from "./pages/Pipeline";
@@ -26,6 +27,7 @@ import Consent from "./pages/Consent";
 import Analytics from "./pages/Analytics";
 import Developer from "./pages/Developer";
 import WhatsApp from "./pages/WhatsApp";
+import Channels from "./pages/Channels";
 import Workspace from "./pages/Workspace";
 import Pricing from "./pages/Pricing";
 import { PrivacyPolicy, TermsOfService, DataDeletion } from "./pages/LegalPages";
@@ -108,7 +110,9 @@ export default function App() {
             <Route path="/consent" element={<Protected><Consent /></Protected>} />
             <Route path="/analytics" element={<Protected><Analytics /></Protected>} />
             <Route path="/developer" element={<Protected><Developer /></Protected>} />
-            <Route path="/whatsapp" element={<Protected><WhatsApp /></Protected>} />
+            <Route path="/whatsapp" element={<Protected><Channels /></Protected>} />
+            <Route path="/whatsapp-connection" element={<Protected><WhatsApp /></Protected>} />
+            <Route path="/channels" element={<Protected><Channels /></Protected>} />
             <Route path="/team" element={<Protected><Team /></Protected>} />
             <Route path="/vault" element={<Protected><Vault /></Protected>} />
             <Route path="/workspace" element={<Protected><Workspace /></Protected>} />

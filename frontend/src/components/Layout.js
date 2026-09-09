@@ -34,11 +34,11 @@ const BUSINESS_NAV = [
 
 const MORE_NAV = [
   { name: "Quotations", icon: Receipt, path: "/quotations" },
-  { name: "WhatsApp", icon: Phone, path: "/whatsapp" },
+  { name: "Channels", icon: Phone, path: "/whatsapp", badge: "NEW" },
   { name: "Consent Guard", icon: ShieldCheck, path: "/consent" },
-  { name: "Developer API", icon: Code2, path: "/developer" },
+  { name: "Developer API", icon: Code2, path: "/developer", privileged: true },
   { name: "Team", icon: UsersRound, path: "/team" },
-  { name: "API Vault", icon: KeyRound, path: "/vault" },
+  { name: "API Vault", icon: KeyRound, path: "/vault", privileged: true },
   { name: "Workspace", icon: Gauge, path: "/workspace" },
 ];
 
@@ -66,7 +66,9 @@ export default function Layout({ children }) {
     return () => { active = false; clearInterval(timer); };
   }, []);
 
-  const allNav = [...AI_NAV, ...BUSINESS_NAV, ...MORE_NAV, { name: "Settings", path: "/settings" }];
+  const canManageSecrets = user?.role === "owner" || user?.role === "admin";
+  const visibleMoreNav = MORE_NAV.filter((item) => !item.privileged || canManageSecrets);
+  const allNav = [...AI_NAV, ...BUSINESS_NAV, ...visibleMoreNav, { name: "Settings", path: "/settings" }];
   const title = allNav.find((item) => location.pathname.startsWith(item.path))?.name || "GOLD-e AI";
   const coinBalance = saas?.wallet?.coin_balance ?? 0;
   const plan = saas?.workspace?.plan || user?.plan || "Free";
@@ -96,7 +98,7 @@ export default function Layout({ children }) {
 
         <div className="mt-4">
           <button onClick={() => setMoreOpen((v) => !v)} className="mb-1 flex w-full items-center justify-between px-2 py-1.5 text-left text-[10px] font-extrabold uppercase tracking-[.16em] text-slate-400"><span>More tools</span><ChevronDown className={`h-3.5 w-3.5 transition ${moreOpen ? "rotate-180" : ""}`} /></button>
-          {moreOpen && <div className="space-y-1">{MORE_NAV.map((item) => <NavItem key={item.path} item={item} />)}</div>}
+          {moreOpen && <div className="space-y-1">{visibleMoreNav.map((item) => <NavItem key={item.path} item={item} />)}</div>}
         </div>
 
         <div className="mt-5 px-2"><div className="mb-2 text-[10px] font-extrabold uppercase tracking-[.16em] text-slate-400">Recent Chats</div><div className="space-y-1">{RECENT.map((item) => <button key={item} onClick={() => navigate("/history")} className="block w-full truncate rounded-lg px-2 py-1.5 text-left text-xs font-medium text-slate-500 transition hover:bg-violet-50 hover:text-violet-700">{item}</button>)}</div></div>

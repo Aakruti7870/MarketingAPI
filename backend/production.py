@@ -23,6 +23,7 @@ if not os.environ.get("VAULT_KEY"):
     os.environ["VAULT_KEY"] = base64.urlsafe_b64encode(digest).decode()
 
 import billing
+import channels
 import contacts
 import core
 import flows
@@ -73,6 +74,7 @@ app.include_router(privacy.router)
 app.include_router(production_ai.router)
 app.include_router(flows.router)
 app.include_router(contacts.router)
+app.include_router(channels.router)
 
 
 def _env_bool(name: str, default: bool = False) -> bool:
@@ -266,6 +268,7 @@ async def production_indexes():
             {"$set": {"plan": "Free"}},
         )
         await core.db.whatsapp_connections.create_index("phone_number_id", unique=True, sparse=True)
+        await core.db.channel_connections.create_index([("workspace_id", 1), ("channel", 1)], unique=True)
         await core.db.followups.create_index(
             [("workspace_id", 1), ("followup_key", 1)], unique=True, sparse=True
         )
