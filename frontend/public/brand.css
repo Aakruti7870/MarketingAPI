@@ -4,28 +4,35 @@
 }
 
 /*
- * Landing-page logo audit
- * - Header brand
- * - Hero lockup
- * - Product preview sidebar
- * - Feature mini-chat
- * - FAQ phone showcase
- * - Footer brand
- *
- * The 36 px BrandMark is targeted directly on the landing page so the
- * supplied logo renders even in browsers/webviews without :has() support.
+ * The supplied artwork is a square JPG lockup that already contains
+ * "GOLD-e AI / AI Revenue Engine". Small UI marks therefore crop to the
+ * emblem only, while the surrounding UI owns the brand text. The image is
+ * blended into the page instead of being shown as a pasted white patch.
  */
 .landing-shell .brand-gradient.h-9.w-9,
 .brand-gradient.h-10.w-10:has(> svg.lucide-sparkles),
 .brand-gradient.h-11.w-11:has(> svg.lucide-sparkles) {
-  background-color: rgba(255, 255, 255, 0.96) !important;
-  background-image: var(--gold-e-logo-image) !important;
-  background-repeat: no-repeat !important;
-  background-position: 27% 42% !important;
-  background-size: 178% 178% !important;
-  border: 1px solid rgba(139, 92, 246, 0.16);
-  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.14) !important;
+  position: relative;
+  isolation: isolate;
+  background: transparent !important;
+  border: 1px solid rgba(139, 92, 246, 0.12);
+  box-shadow: 0 8px 24px rgba(124, 58, 237, 0.12) !important;
   overflow: hidden;
+}
+
+.landing-shell .brand-gradient.h-9.w-9::after,
+.brand-gradient.h-10.w-10:has(> svg.lucide-sparkles)::after,
+.brand-gradient.h-11.w-11:has(> svg.lucide-sparkles)::after {
+  content: '';
+  position: absolute;
+  inset: -8%;
+  z-index: 0;
+  background-image: var(--gold-e-logo-image);
+  background-repeat: no-repeat;
+  background-position: 14% 49%;
+  background-size: 218% 218%;
+  mix-blend-mode: multiply;
+  filter: saturate(1.14) contrast(1.04) brightness(1.03);
 }
 
 .landing-shell .brand-gradient.h-9.w-9 > svg.lucide-sparkles,
@@ -34,23 +41,69 @@
   opacity: 0 !important;
 }
 
-/* Full supplied lockup: large enough to keep GOLD-e AI / AI Revenue Engine legible. */
+/* Hero emblem: use only the emblem crop, never the embedded wordmark. */
 .landing-shell section#home > .relative.mx-auto.max-w-5xl.text-center::before {
   content: '';
   display: block;
-  width: clamp(144px, 17vw, 184px);
+  width: clamp(118px, 14vw, 156px);
   aspect-ratio: 1 / 1;
-  margin: 0 auto 14px;
-  background: rgba(255, 255, 255, 0.76) var(--gold-e-logo-image) center / contain no-repeat;
-  border: 1px solid rgba(255, 255, 255, 0.94);
-  border-radius: 32px;
-  box-shadow: 0 24px 70px rgba(103, 58, 183, 0.13);
+  margin: 0 auto 18px;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 34px;
+  background:
+    radial-gradient(circle at 28% 22%, rgba(255,255,255,.94), rgba(255,255,255,.46) 42%, rgba(237,233,254,.18) 72%, rgba(255,255,255,0) 100%);
+  box-shadow:
+    0 24px 70px rgba(103, 58, 183, 0.11),
+    inset 0 1px 0 rgba(255,255,255,.9);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.landing-shell section#home > .relative.mx-auto.max-w-5xl.text-center::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: clamp(106px, 13vw, 142px);
+  aspect-ratio: 1 / 1;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background-image: var(--gold-e-logo-image);
+  background-repeat: no-repeat;
+  background-position: 14% 49%;
+  background-size: 218% 218%;
+  mix-blend-mode: multiply;
+  filter: saturate(1.16) contrast(1.05) brightness(1.04) drop-shadow(0 10px 26px rgba(124,58,237,.10));
+}
+
+/* Defensive mobile sizing: prevent badge/headline overflow on narrow screens. */
+.landing-shell section#home > .relative.mx-auto.max-w-5xl.text-center > .mb-5.inline-flex {
+  max-width: calc(100vw - 2.5rem);
+  white-space: normal;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.25;
+}
+
+.landing-shell section#home h1 {
+  font-size: clamp(2.45rem, 10.5vw, 4.5rem) !important;
+  line-height: 0.98 !important;
+  max-width: 100%;
 }
 
 @media (max-width: 640px) {
   .landing-shell section#home > .relative.mx-auto.max-w-5xl.text-center::before {
-    width: 136px;
-    margin-bottom: 10px;
-    border-radius: 26px;
+    width: 112px;
+    margin-bottom: 14px;
+    border-radius: 28px;
+  }
+
+  .landing-shell section#home > .relative.mx-auto.max-w-5xl.text-center::after {
+    width: 102px;
+    top: -1px;
+  }
+
+  .landing-shell section#home {
+    padding-top: 3rem !important;
   }
 }
