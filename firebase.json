@@ -8,11 +8,38 @@
     ],
     "headers": [
       {
-        "source": "**/*.@(js|css|woff2|png|jpg|jpeg|svg|webp|ico)",
+        "source": "/static/**",
         "headers": [
           {
             "key": "Cache-Control",
             "value": "public,max-age=31536000,immutable"
+          }
+        ]
+      },
+      {
+        "source": "/brand.css",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public,max-age=0,must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "/gold-e-ai-emblem.svg",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public,max-age=3600,must-revalidate"
+          }
+        ]
+      },
+      {
+        "source": "/gold-e-ai-logo.jpg",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "public,max-age=3600,must-revalidate"
           }
         ]
       },
