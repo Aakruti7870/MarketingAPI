@@ -94,14 +94,20 @@ async def save_channel(slug: str, body: ChannelIn, user: dict = Depends(require_
         raise HTTPException(400, detail="Use the dedicated WhatsApp connection screen for WhatsApp")
     allowed = set(CHANNELS[slug]["fields"])
     supplied = {k: str(v).strip() for k, v in body.fields.items() if k in allowed and str(v).strip()}
-    if not supplied and body.enabled:
+    existing = await db.channel_connections.find_one({"workspace_id": user["workspace_id"], "channel": slug})
+    if not supplied and not existing and body.enabled:
         raise HTTPException(400, detail="Add at least one configuration field")
-    fields_enc = {key: encrypt_str(value) for key, value in supplied.items()}
+
+    fields_enc = dict((existing or {}).get("fields_enc", {}))
+    fields_enc.update({key: encrypt_str(value) for key, value in supplied.items()})
+    field_kinds = dict((existing or {}).get("field_kinds", {}))
+    field_kinds.update({key: ("secret" if any(h in key.lower() for h in SECRET_HINTS) else "value") for key in supplied})
+
     doc = {
         "workspace_id": user["workspace_id"], "channel": slug,
-        "label": body.label.strip(), "enabled": body.enabled,
+        "label": body.label.strip() or (existing or {}).get("label", ""), "enabled": body.enabled,
         "fields_enc": fields_enc,
-        "field_kinds": {key: ("secret" if any(h in key.lower() for h in SECRET_HINTS) else "value") for key in supplied},
+        "field_kinds": field_kinds,
         "updated_at": now_iso(), "updated_by": user.get("id"),
     }
     await db.channel_connections.update_one(
