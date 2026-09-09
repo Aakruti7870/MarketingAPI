@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - "feat/**"
+      - "fix/**"
 
 permissions:
   contents: read
@@ -109,8 +110,19 @@ jobs:
           python - <<'PY'
           import pathlib, yaml
           data = yaml.safe_load(pathlib.Path('cloudbuild.yaml').read_text())
-          assert isinstance(data.get('steps'), list) and len(data['steps']) >= 7
-          assert any(step.get('id') == 'ensure-artifact-registry' for step in data['steps'])
-          assert any(step.get('id') == 'deploy-cloud-run' for step in data['steps'])
-          assert any(step.get('id') == 'deploy-firebase-hosting' for step in data['steps'])
+          steps = data.get('steps') or []
+          ids = [step.get('id') for step in steps]
+          assert isinstance(steps, list) and len(steps) >= 9
+          assert 'ensure-artifact-registry' in ids
+          assert 'deploy-cloud-run' in ids
+          assert 'verify-cloud-run' in ids
+          assert 'deploy-firebase-hosting' in ids
+          assert 'verify-public-release' in ids
+          assert ids.index('verify-cloud-run') > ids.index('deploy-cloud-run')
+          assert ids.index('verify-public-release') > ids.index('deploy-firebase-hosting')
+          cloudrun = next(step for step in steps if step.get('id') == 'verify-cloud-run')
+          public = next(step for step in steps if step.get('id') == 'verify-public-release')
+          assert '/api/health' in str(cloudrun)
+          assert '/api/health' in str(public)
+          assert '/api/version' in str(public)
           PY
