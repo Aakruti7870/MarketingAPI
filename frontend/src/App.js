@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { ThemeProvider, useTheme } from "./context/ThemeContext";
 import Layout from "./components/Layout";
+import ProductActionBar from "./components/ProductActionBar";
 import PrivacyRequestCard from "./components/PrivacyRequestCard";
 import ThemeToggle from "./components/ThemeToggle";
 import Landing from "./pages/Landing";
@@ -37,7 +38,7 @@ function Protected({ children }) {
   const { user } = useAuth();
   if (user === null) return <div className="flex h-screen items-center justify-center bg-violet-50"><div className="brand-gradient h-10 w-10 animate-pulse rounded-xl shadow-brand" /></div>;
   if (!user) return <Navigate to="/login" replace />;
-  return <Layout>{children}</Layout>;
+  return <Layout><ProductActionBar />{children}</Layout>;
 }
 
 function GuestOnly({ children }) {
