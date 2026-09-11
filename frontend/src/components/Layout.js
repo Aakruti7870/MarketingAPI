@@ -8,7 +8,7 @@ import {
   BarChart3, Bell, Bot, ChevronDown, ChevronRight, Code2, FileText, FolderOpen,
   Gauge, GitBranch, History, Home, Kanban, KeyRound, LayoutDashboard, LogOut, Megaphone, Menu,
   MessageSquare, PanelLeftClose, Phone, Receipt, Search, Send, Settings,
-  ShieldCheck, Sparkles, Users, UsersRound, WandSparkles, X, Zap,
+  ShieldCheck, Sparkles, Users, UsersRound, WandSparkles, X, Zap, Blocks,
 } from "lucide-react";
 
 const AI_NAV = [
@@ -36,6 +36,7 @@ const BUSINESS_NAV = [
 const MORE_NAV = [
   { name: "Quotations", icon: Receipt, path: "/quotations" },
   { name: "Channels", icon: Phone, path: "/whatsapp", badge: "NEW" },
+  { name: "Platform Hub", icon: Blocks, path: "/platform", badge: "NEW", privileged: true },
   { name: "Consent Guard", icon: ShieldCheck, path: "/consent" },
   { name: "Developer API", icon: Code2, path: "/developer", privileged: true },
   { name: "Team", icon: UsersRound, path: "/team" },

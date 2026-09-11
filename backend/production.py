@@ -28,6 +28,7 @@ import contacts
 import core
 import flows
 import privacy
+import platform_hub
 import production_ai
 import production_guardrails
 import saas
@@ -77,6 +78,7 @@ app.include_router(secure_team.router)
 app.include_router(billing.router)
 app.include_router(saas.router)
 app.include_router(privacy.router)
+app.include_router(platform_hub.router)
 app.include_router(production_ai.router)
 app.include_router(flows.router)
 app.include_router(contacts.router)
@@ -371,6 +373,12 @@ async def production_indexes():
         await core.db.contact_imports.create_index([("workspace_id", 1), ("created_at", -1)])
         await core.db.broadcast_audiences.create_index([("workspace_id", 1), ("updated_at", -1)])
         await core.db.leads.create_index([("workspace_id", 1), ("phone_hash", 1)], sparse=True)
+        await core.db.plugin_installations.create_index([("workspace_id", 1), ("slug", 1)], unique=True)
+        await core.db.plugin_submissions.create_index([("workspace_id", 1), ("submitted_at", -1)])
+        await core.db.ai_route_policies.create_index("workspace_id", unique=True)
+        await core.db.domain_orders.create_index([("workspace_id", 1), ("created_at", -1)])
+        await core.db.tls_orders.create_index([("workspace_id", 1), ("created_at", -1)])
+        await core.db.revenue_ledger.create_index([("workspace_id", 1), ("created_at", -1)])
     except Exception as exc:
         print(f"production startup hardening error: {type(exc).__name__}")
 

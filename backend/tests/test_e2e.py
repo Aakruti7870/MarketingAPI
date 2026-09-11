@@ -43,6 +43,64 @@ def test_health_and_version():
     assert version.json()["service"]
 
 
+def test_platform_hub_plugins_ai_domains_tls_and_revenue():
+    owner = register_workspace("platform")
+    token = owner["token"]
+    auth = headers(token)
+
+    catalog = requests.get(f"{API}/platform/plugins/catalog", headers=auth, timeout=10)
+    assert catalog.status_code == 200, catalog.text
+    items = catalog.json()
+    assert any(item["slug"] == "openai" and item["trust"] == "verified" for item in items)
+
+    install = requests.post(
+        f"{API}/platform/plugins/install", headers=auth,
+        json={"slug": "openai", "scopes": ["files.read"]}, timeout=10,
+    )
+    assert install.status_code == 201, install.text
+    assert install.json()["status"] == "installed_pending_verification"
+
+    verify = requests.post(f"{API}/platform/plugins/openai/verify", headers=auth, timeout=10)
+    assert verify.status_code == 200, verify.text
+    assert verify.json()["status"] == "configuration_required"
+    assert verify.json()["enabled"] is False
+
+    excessive = requests.post(
+        f"{API}/platform/plugins/install", headers=auth,
+        json={"slug": "openai", "scopes": ["domains.manage"]}, timeout=10,
+    )
+    assert excessive.status_code == 400, excessive.text
+
+    policy = requests.put(
+        f"{API}/platform/ai/policy", headers=auth,
+        json={"strategy": "quality", "allowed_providers": ["openai"], "fallback_enabled": True, "data_region": "india", "max_cost_usd": 2.5, "pii_mode": "redact"},
+        timeout=10,
+    )
+    assert policy.status_code == 200, policy.text
+    assert policy.json()["strategy"] == "quality"
+    saved = requests.get(f"{API}/platform/ai/policy", headers=auth, timeout=10)
+    assert saved.json()["data_region"] == "india"
+
+    search = requests.post(
+        f"{API}/platform/domains/search", headers=auth,
+        json={"query": "gold-e-global", "tlds": ["com", "ai"]}, timeout=10,
+    )
+    assert search.status_code == 202, search.text
+    assert search.json()["authoritative"] is False
+    assert search.json()["status"] == "provider_connection_required"
+
+    tls = requests.post(
+        f"{API}/platform/tls/orders", headers=auth,
+        json={"domain": "gold-e-global.com", "product": "managed-dv", "auto_renew": True}, timeout=10,
+    )
+    assert tls.status_code == 202, tls.text
+    assert tls.json()["certificate_material_stored"] is False
+
+    revenue = requests.get(f"{API}/platform/revenue/model", headers=auth, timeout=10)
+    assert revenue.status_code == 200, revenue.text
+    assert {item["id"] for item in revenue.json()["streams"]} >= {"subscriptions", "domain_commission", "managed_tls", "plugin_addons"}
+
+
 def test_pricing_free_coins_and_exhaustion():
     pricing = requests.get(f"{API}/billing/pricing", timeout=10)
     assert pricing.status_code == 200, pricing.text

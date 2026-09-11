@@ -31,6 +31,7 @@ import WhatsApp from "./pages/WhatsApp";
 import Channels from "./pages/Channels";
 import Workspace from "./pages/Workspace";
 import Pricing from "./pages/Pricing";
+import PlatformHub from "./pages/PlatformHub";
 import { PrivacyPolicy, TermsOfService, DataDeletion } from "./pages/LegalPages";
 
 function Protected({ children }) {
@@ -118,6 +119,7 @@ export default function App() {
             <Route path="/team" element={<Protected><Team /></Protected>} />
             <Route path="/vault" element={<Protected><Vault /></Protected>} />
             <Route path="/workspace" element={<Protected><Workspace /></Protected>} />
+            <Route path="/platform" element={<Protected><PlatformHub /></Protected>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </BrowserRouter>
