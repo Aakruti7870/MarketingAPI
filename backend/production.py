@@ -178,3 +178,8 @@ app.include_router(orchestrator_router)
 @app.get("/health")
 async def health():
     return {"status": "online", "revenue_engine": "active", "version": "2.0.0"}
+
+from fastapi.staticfiles import StaticFiles
+
+if os.path.exists("frontend/build"):
+app.mount("/", StaticFiles(directory="frontend/build", html=True), name="static")
