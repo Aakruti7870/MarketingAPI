@@ -6,6 +6,7 @@ from typing import Dict, Any, List, Optional
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 app = FastAPI(
@@ -27,7 +28,6 @@ channels_db: Dict[str, Dict[str, Any]] = {}
 task_queue: Dict[str, Any] = {}
 gmb_listings: Dict[str, Dict[str, Any]] = {}
 
-# 1. Action Credit Billing Router
 billing_router = APIRouter(prefix="/api/billing", tags=["Billing Engine"])
 
 CREDIT_RATES = {
@@ -57,7 +57,6 @@ async def deduct_credits(req: DeductReq):
 async def get_balance(user_id: str):
     return {"user_id": user_id, "credit_balance": user_wallets.get(user_id, 0)}
 
-# 2. Google Maps AI Chatbot Router
 gmb_router = APIRouter(prefix="/api/google-maps", tags=["Google Maps AI Setup"])
 
 class GMBSetupReq(BaseModel):
@@ -98,7 +97,6 @@ async def submit_google_maps_listing(req: GMBSetupReq):
 async def list_gmb_listings():
     return list(gmb_listings.values())
 
-# 3. AI Banner & Media Studio Router
 ai_studio_router = APIRouter(prefix="/api/ai-studio", tags=["AI Marketing Studio"])
 
 class BannerReq(BaseModel):
@@ -119,7 +117,6 @@ async def generate_banner(req: BannerReq):
         "credits_remaining": user_wallets[req.user_id]
     }
 
-# 4. Lead Discovery Router
 lead_router = APIRouter(prefix="/api/leads-discovery", tags=["Lead Discovery"])
 
 @lead_router.post("/scrape")
@@ -136,7 +133,6 @@ async def scrape_leads(query: str = "Contractors", location: str = "Navi Mumbai"
         ]
     }
 
-# 5. CSV Channels Router
 channels_router = APIRouter(prefix="/api/channels", tags=["Shielded Channels"])
 
 @channels_router.post("/create-with-csv")
@@ -149,7 +145,6 @@ async def create_channel_csv(channel_name: str = Form(...), description: Optiona
     channels_db[chan_id] = {"channel_id": chan_id, "channel_name": channel_name, "contacts_count": len(contacts), "privacy_shielded": True}
     return {"status": "success", "channel_name": channel_name, "total_contacts_imported": len(contacts), "privacy_shielded": True}
 
-# 6. Guarded Negotiation Router
 negotiation_router = APIRouter(prefix="/api/negotiation", tags=["AI Negotiation Engine"])
 
 class SessionModel(BaseModel):
@@ -183,4 +178,11 @@ async def health():
     return {"status": "online", "revenue_engine": "active", "version": "4.0.0"}
 
 if os.path.exists("frontend/build"):
-    app.mount("/", StaticFiles(directory="frontend/build", html=True), name="static")
+    app.mount("/static", StaticFiles(directory="frontend/build/static"), name="static")
+
+    @app.get("/{full_path:path}")
+    async def serve_react_app(full_path: str):
+        file_path = os.path.join("frontend/build", full_path)
+        if os.path.exists(file_path) and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        return FileResponse("frontend/build/index.html")
