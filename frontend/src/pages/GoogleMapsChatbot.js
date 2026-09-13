@@ -5,7 +5,7 @@ import { MapPin, CheckCircle2, Send } from 'lucide-react';
 export default function GoogleMapsChatbot() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    business_name: 'Aakruti Infra RMC Plant',
+    business_name: 'GOLD-e AI Digital Suite',
     category: 'Infrastructure & Construction',
     address: 'Plot 42, MIDC Industrial Area',
     pincode: '410206',

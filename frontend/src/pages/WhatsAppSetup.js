@@ -3,7 +3,7 @@ import { Card, Button, Badge } from '../components/ui';
 import { CheckCircle2, ShieldCheck, Save } from 'lucide-react';
 
 export default function WhatsAppSetup() {
-  const [businessName, setBusinessName] = useState('Aakruti Infra RMC Plant');
+  const [businessName, setBusinessName] = useState('GOLD-e AI Digital Suite');
   const [phoneID, setPhoneID] = useState('109823908123908');
   const [wabaID, setWabaID] = useState('982390812390812');
   const [token, setToken] = useState('EAAG...............');
