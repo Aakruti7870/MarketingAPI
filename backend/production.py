@@ -177,24 +177,25 @@ app.include_router(negotiation_router)
 async def health():
     return {"status": "online", "revenue_engine": "active", "version": "4.0.0"}
 
-if os.path.exists("frontend/build/static"):
-    app.mount("/static", StaticFiles(directory="frontend/build/static"), name="static")
+# Check and mount static build
+BUILD_DIR = os.path.join(os.path.dirname(__file__), "..", "frontend", "build")
+if not os.path.exists(BUILD_DIR):
+    BUILD_DIR = os.path.join(os.getcwd(), "frontend", "build")
 
-# Explicit Root Route
-@app.get("/")
-async def serve_root():
-    index_path = os.path.join("frontend", "build", "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    return {"status": "online", "message": "MarketingAPI Engine Active. Visit /docs"}
+if os.path.exists(BUILD_DIR):
+    app.mount("/static", StaticFiles(directory=os.path.join(BUILD_DIR, "static")), name="static")
 
-# Catch-all Route for Client-side Subroutes
 @app.get("/{full_path:path}")
-async def serve_react_app(full_path: str):
-    file_path = os.path.join("frontend/build", full_path)
+async def serve_app(full_path: str):
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="API route not found")
+    
+    file_path = os.path.join(BUILD_DIR, full_path)
     if os.path.exists(file_path) and os.path.isfile(file_path):
         return FileResponse(file_path)
-    index_path = os.path.join("frontend", "build", "index.html")
-    if os.path.exists(index_path):
-        return FileResponse(index_path)
-    raise HTTPException(status_code=404, detail="Page not found")
+    
+    index_file = os.path.join(BUILD_DIR, "index.html")
+    if os.path.exists(index_file):
+        return FileResponse(index_file)
+    
+    return {"status": "online", "message": "Backend engine online. React build missing at runtime."}

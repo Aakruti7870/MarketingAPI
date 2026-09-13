@@ -9,6 +9,7 @@ RUN npm run build
 FROM python:3.11-slim
 WORKDIR /app
 COPY . .
+RUN mkdir -p frontend/build
 COPY --from=frontend-builder /app/frontend/build ./frontend/build
 RUN pip install --no-cache-dir fastapi uvicorn pytest reportlab pydantic python-multipart
 EXPOSE 8080
