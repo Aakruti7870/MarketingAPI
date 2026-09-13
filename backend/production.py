@@ -22,7 +22,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Shared In-Memory State
 user_wallets: Dict[str, int] = {"user_default": 2850}
 channels_db: Dict[str, Dict[str, Any]] = {}
 task_queue: Dict[str, Any] = {}
@@ -172,7 +171,6 @@ async def process_offer(session: SessionModel, rule: RuleModel):
         return {"status": "counter_offer", "accepted": False, "counter_unit_price": counter_unit, "message": f"Offered rate ₹{unit_offer:.2f} is below floor limit ₹{rule.min_floor_price}."}
     return {"status": "deal_accepted", "accepted": True, "final_unit_price": unit_offer, "payment_link": f"https://payments.cashfree.com/links/deal_{session.customer_phone[-4:]}"}
 
-# Register Routers
 app.include_router(billing_router)
 app.include_router(gmb_router)
 app.include_router(ai_studio_router)
