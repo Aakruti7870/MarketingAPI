@@ -177,11 +177,18 @@ app.include_router(negotiation_router)
 async def health():
     return {"status": "online", "revenue_engine": "active", "version": "4.0.0"}
 
-# Serve static assets if build exists
 if os.path.exists("frontend/build/static"):
     app.mount("/static", StaticFiles(directory="frontend/build/static"), name="static")
 
-# SPA Catch-all Route
+# Explicit Root Route
+@app.get("/")
+async def serve_root():
+    index_path = os.path.join("frontend", "build", "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"status": "online", "message": "MarketingAPI Engine Active. Visit /docs"}
+
+# Catch-all Route for Client-side Subroutes
 @app.get("/{full_path:path}")
 async def serve_react_app(full_path: str):
     file_path = os.path.join("frontend/build", full_path)
@@ -190,4 +197,4 @@ async def serve_react_app(full_path: str):
     index_path = os.path.join("frontend", "build", "index.html")
     if os.path.exists(index_path):
         return FileResponse(index_path)
-    return {"status": "online", "message": "MarketingAPI Engine Active. API documentation available at /docs"}
+    raise HTTPException(status_code=404, detail="Page not found")
