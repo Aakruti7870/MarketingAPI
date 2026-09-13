@@ -177,12 +177,17 @@ app.include_router(negotiation_router)
 async def health():
     return {"status": "online", "revenue_engine": "active", "version": "4.0.0"}
 
-if os.path.exists("frontend/build"):
+# Serve static assets if build exists
+if os.path.exists("frontend/build/static"):
     app.mount("/static", StaticFiles(directory="frontend/build/static"), name="static")
 
-    @app.get("/{full_path:path}")
-    async def serve_react_app(full_path: str):
-        file_path = os.path.join("frontend/build", full_path)
-        if os.path.exists(file_path) and os.path.isfile(file_path):
-            return FileResponse(file_path)
-        return FileResponse("frontend/build/index.html")
+# SPA Catch-all Route
+@app.get("/{full_path:path}")
+async def serve_react_app(full_path: str):
+    file_path = os.path.join("frontend/build", full_path)
+    if os.path.exists(file_path) and os.path.isfile(file_path):
+        return FileResponse(file_path)
+    index_path = os.path.join("frontend", "build", "index.html")
+    if os.path.exists(index_path):
+        return FileResponse(index_path)
+    return {"status": "online", "message": "MarketingAPI Engine Active. API documentation available at /docs"}
