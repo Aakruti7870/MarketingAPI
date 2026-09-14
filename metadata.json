@@ -1,0 +1,6 @@
+{
+  "name": "LUMINA360",
+  "description": "LUMINA360: Autonomous Agentic Marketing & AI Operating System for Small Businesses, Hospitals, Schools, Tutors & Suppliers",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
