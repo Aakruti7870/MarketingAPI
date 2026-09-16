@@ -597,7 +597,7 @@ function verifyBedrockCredentials(config: { access_key_id: string; secret_access
 // Admin API Key Endpoints
 
 // 1. GET /api/admin/keys: Get list of all 4 provider configurations safely (no raw secret leaks)
-app.get("/api/admin/keys" requireAdminSession, (req: Request, res: Response) => {
+app.get("/api/admin/keys", requireAdminSession, (req: Request, res: Response) => {
   const providersList = [
     {
       provider: "gemini",
@@ -671,7 +671,7 @@ app.get("/api/admin/keys" requireAdminSession, (req: Request, res: Response) => 
 });
 
 // 2. POST /api/admin/keys/save: Securely save/update an API key or AWS IAM configuration
-app.post("/api/admin/keys/save" requireAdminSession, async (req: Request, res: Response) => {
+app.post("/api/admin/keys/save", requireAdminSession, async (req: Request, res: Response) => {
   const { provider, api_key, access_key_id, secret_access_key, region = "us-east-1" } = req.body;
 
   if (!provider) {
@@ -739,7 +739,7 @@ app.post("/api/admin/keys/save" requireAdminSession, async (req: Request, res: R
 });
 
 // 3. POST /api/admin/keys/verify: Perform a live verification probe on a provider
-app.post("/api/admin/keys/verify" requireAdminSession, async (req: Request, res: Response) => {
+app.post("/api/admin/keys/verify", requireAdminSession, async (req: Request, res: Response) => {
   const { provider, api_key, access_key_id, secret_access_key, region } = req.body;
 
   if (!provider) {
@@ -812,7 +812,7 @@ app.post("/api/admin/keys/verify" requireAdminSession, async (req: Request, res:
 });
 
 // 4. POST /api/admin/keys/verify-all: Concurrent validation probe across all configured providers
-app.post("/api/admin/keys/verify-all" requireAdminSession, async (req: Request, res: Response) => {
+app.post("/api/admin/keys/verify-all", requireAdminSession, async (req: Request, res: Response) => {
   const tasks = [];
 
   if (ADMIN_API_KEYS.gemini || process.env.GEMINI_API_KEY) {
@@ -850,7 +850,7 @@ app.post("/api/admin/keys/verify-all" requireAdminSession, async (req: Request, 
 });
 
 // 5. DELETE /api/admin/keys/clear: Reset or delete an API key from active storage
-app.delete("/api/admin/keys/clear" requireAdminSession, (req: Request, res: Response) => {
+app.delete("/api/admin/keys/clear", requireAdminSession, (req: Request, res: Response) => {
   const { provider } = req.body;
   if (!provider) {
     return res.status(400).json({ status: "error", message: "Provider is required." });
