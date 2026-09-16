@@ -4,7 +4,9 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 import agentic_platform
 
-router = APIRouter(prefix="/industry-bots", tags=["industry-bots"])
+# production_guardrails already mounts this router under /api. Keep this router
+# unprefixed so its nested Agentic platform remains /api/agentic-platform.
+router = APIRouter(tags=["industry-bots"])
 router.include_router(agentic_platform.router, prefix="", tags=["agentic-platform"])
 
 BOTS = [
@@ -19,17 +21,17 @@ class ActionRequest(BaseModel):
  action: str = Field(min_length=2, max_length=80)
  payload: dict = Field(default_factory=dict)
 
-@router.get("")
+@router.get("/industry-bots")
 async def list_bots():
  return {"bots": BOTS, "count": len(BOTS)}
 
-@router.get("/{bot_id}")
+@router.get("/industry-bots/{bot_id}")
 async def get_bot(bot_id: str):
  for bot in BOTS:
   if bot["id"] == bot_id: return bot
  raise HTTPException(status_code=404, detail="Industry bot not found")
 
-@router.post("/{bot_id}/action")
+@router.post("/industry-bots/{bot_id}/action")
 async def plan_action(bot_id: str, body: ActionRequest):
  bot = next((b for b in BOTS if b["id"] == bot_id), None)
  if not bot: raise HTTPException(status_code=404, detail="Industry bot not found")
