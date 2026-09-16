@@ -2,23 +2,33 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 
 const AuthContext = createContext(null);
 const STORAGE_KEY = 'lumina360_user';
+const SESSION_TTL_MS = 8 * 60 * 60 * 1000;
 
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      return stored ? JSON.parse(stored) : null;
-    } catch {
+function readStoredUser() {
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    if (!raw) return null;
+    const stored = JSON.parse(raw);
+    const issuedAt = Number(stored?.sessionIssuedAt || 0);
+    if (!issuedAt || Date.now() - issuedAt >= SESSION_TTL_MS) {
+      sessionStorage.removeItem(STORAGE_KEY);
       return null;
     }
-  });
+    return stored;
+  } catch {
+    return null;
+  }
+}
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(readStoredUser);
 
   useEffect(() => {
     try {
-      if (user) localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-      else localStorage.removeItem(STORAGE_KEY);
+      if (user) sessionStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+      else sessionStorage.removeItem(STORAGE_KEY);
     } catch (e) {
-      console.warn('Could not persist session:', e);
+      console.warn('Could not persist browser session:', e);
     }
   }, [user]);
 
@@ -33,15 +43,17 @@ export function AuthProvider({ children }) {
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result.success) return { success: false, message: result.message || 'Invalid email or password.' };
+
       const authenticatedUser = {
         email: result.user?.email || cleanEmail,
         name: result.user?.name || 'Super Admin',
         role: result.user?.role || 'SUPER_ADMIN',
         isAdmin: true,
-        plan: result.user?.plan || 'Super Admin Lifetime',
-        credits: result.user?.credits ?? 999999,
+        plan: result.user?.plan || 'Super Admin',
+        credits: result.user?.credits ?? 0,
         isEverythingFree: result.user?.isEverythingFree === true,
         sessionToken: result.sessionToken,
+        sessionIssuedAt: Date.now(),
       };
       setUser(authenticatedUser);
       return { success: true, user: authenticatedUser, message: result.message || 'Authenticated.' };
@@ -51,11 +63,27 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = () => setUser(null);
-  const activateAdminPass = async () => ({ success: false, message: 'Admin activation requires server authentication.' });
+  const logout = () => {
+    setUser(null);
+    try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* ignore storage errors */ }
+  };
+
+  const activateAdminPass = async () => ({
+    success: false,
+    message: 'Admin activation requires server authentication.',
+  });
 
   return (
-    <AuthContext.Provider value={{ user, isAdmin: user?.isAdmin === true, isEverythingFree: user?.isEverythingFree === true, login, logout, activateAdminPass }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAdmin: user?.isAdmin === true,
+        isEverythingFree: user?.isEverythingFree === true,
+        login,
+        logout,
+        activateAdminPass,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
