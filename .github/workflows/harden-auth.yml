@@ -18,7 +18,7 @@ jobs:
 
       - name: Apply pending auth session migration
         if: hashFiles('AUTH_SESSION_HARDENING_REQUEST') != ''
-        run: node scripts/harden-auth-session.mjs
+        run: python3 scripts/harden-auth-session.py
 
       - name: Commit auth session migration
         if: hashFiles('AUTH_SESSION_HARDENING_REQUEST') == ''
@@ -30,7 +30,7 @@ jobs:
           fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add server.ts AUTH_SESSION_HARDENING_REQUEST scripts/harden-auth-session.mjs
+          git add server.ts AUTH_SESSION_HARDENING_REQUEST scripts/harden-auth-session.mjs scripts/harden-auth-session.py
           git commit -m 'Harden server-side admin sessions'
           git push origin HEAD:main
 
