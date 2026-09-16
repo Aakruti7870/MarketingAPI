@@ -1,112 +1,61 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
 const AuthContext = createContext(null);
-
-export const ADMIN_CREDENTIALS = {
-  email: 'krushnabade54@gmail.com',
-  password: 'Krushna@1208',
-  name: 'Krushna Bade',
-  role: 'SUPER_ADMIN',
-  plan: 'Super Admin Lifetime (Everything Free)',
-  credits: 999999,
-  isEverythingFree: true,
-};
+const STORAGE_KEY = 'lumina360_user';
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     try {
-      const stored = localStorage.getItem('lumina360_user');
-      if (stored) {
-        return JSON.parse(stored);
-      }
-    } catch (e) {
-      console.warn('Could not read user from localStorage', e);
+      const stored = localStorage.getItem(STORAGE_KEY);
+      return stored ? JSON.parse(stored) : null;
+    } catch {
+      return null;
     }
-    // Default to Super Admin so Krushna Bade gets instant Everything Free access!
-    return {
-      email: ADMIN_CREDENTIALS.email,
-      name: ADMIN_CREDENTIALS.name,
-      role: ADMIN_CREDENTIALS.role,
-      isAdmin: true,
-      plan: ADMIN_CREDENTIALS.plan,
-      credits: ADMIN_CREDENTIALS.credits,
-      isEverythingFree: true,
-    };
   });
 
   useEffect(() => {
     try {
-      if (user) {
-        localStorage.setItem('lumina360_user', JSON.stringify(user));
-      } else {
-        localStorage.removeItem('lumina360_user');
-      }
+      if (user) localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+      else localStorage.removeItem(STORAGE_KEY);
     } catch (e) {
-      console.warn('Could not write user to localStorage', e);
+      console.warn('Could not persist session:', e);
     }
   }, [user]);
 
-  const login = (email, password) => {
+  const login = async (email, password) => {
     const cleanEmail = (email || '').trim().toLowerCase();
-    if (cleanEmail === ADMIN_CREDENTIALS.email.toLowerCase() && password === ADMIN_CREDENTIALS.password) {
-      const adminUser = {
-        email: ADMIN_CREDENTIALS.email,
-        name: ADMIN_CREDENTIALS.name,
-        role: ADMIN_CREDENTIALS.role,
+    if (!cleanEmail || !password) return { success: false, message: 'Email and password are required.' };
+    try {
+      const response = await fetch('/api/auth/admin-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail, password }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.success) return { success: false, message: result.message || 'Invalid email or password.' };
+      const authenticatedUser = {
+        email: result.user?.email || cleanEmail,
+        name: result.user?.name || 'Super Admin',
+        role: result.user?.role || 'SUPER_ADMIN',
         isAdmin: true,
-        plan: ADMIN_CREDENTIALS.plan,
-        credits: ADMIN_CREDENTIALS.credits,
-        isEverythingFree: true,
+        plan: result.user?.plan || 'Super Admin Lifetime',
+        credits: result.user?.credits ?? 999999,
+        isEverythingFree: result.user?.isEverythingFree === true,
+        sessionToken: result.sessionToken,
       };
-      setUser(adminUser);
-      return { success: true, user: adminUser, message: 'Super Admin Authenticated. Everything Free Access active!' };
+      setUser(authenticatedUser);
+      return { success: true, user: authenticatedUser, message: result.message || 'Authenticated.' };
+    } catch (error) {
+      console.error('Authentication request failed:', error);
+      return { success: false, message: 'Authentication service is unavailable. Please try again.' };
     }
-
-    // Standard demo or normal login
-    const standardUser = {
-      email: cleanEmail,
-      name: cleanEmail.split('@')[0] || 'Member',
-      role: 'USER',
-      isAdmin: false,
-      plan: 'Growth Pro',
-      credits: 3500,
-      isEverythingFree: false,
-    };
-    setUser(standardUser);
-    return { success: true, user: standardUser, message: 'Welcome back!' };
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('lumina360_user');
-  };
-
-  const activateAdminPass = () => {
-    const adminUser = {
-      email: ADMIN_CREDENTIALS.email,
-      name: ADMIN_CREDENTIALS.name,
-      role: ADMIN_CREDENTIALS.role,
-      isAdmin: true,
-      plan: ADMIN_CREDENTIALS.plan,
-      credits: ADMIN_CREDENTIALS.credits,
-      isEverythingFree: true,
-    };
-    setUser(adminUser);
-    return adminUser;
-  };
+  const logout = () => setUser(null);
+  const activateAdminPass = async () => ({ success: false, message: 'Admin activation requires server authentication.' });
 
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAdmin: user?.isAdmin ?? (user?.role === 'SUPER_ADMIN'),
-        isEverythingFree: user?.isEverythingFree ?? (user?.role === 'SUPER_ADMIN'),
-        login,
-        logout,
-        activateAdminPass,
-        ADMIN_CREDENTIALS,
-      }}
-    >
+    <AuthContext.Provider value={{ user, isAdmin: user?.isAdmin === true, isEverythingFree: user?.isEverythingFree === true, login, logout, activateAdminPass }}>
       {children}
     </AuthContext.Provider>
   );
@@ -114,25 +63,6 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
-    // Fallback if rendered outside provider
-    return {
-      user: {
-        email: ADMIN_CREDENTIALS.email,
-        name: ADMIN_CREDENTIALS.name,
-        role: ADMIN_CREDENTIALS.role,
-        isAdmin: true,
-        plan: ADMIN_CREDENTIALS.plan,
-        credits: ADMIN_CREDENTIALS.credits,
-        isEverythingFree: true,
-      },
-      isAdmin: true,
-      isEverythingFree: true,
-      login: () => {},
-      logout: () => {},
-      activateAdminPass: () => {},
-      ADMIN_CREDENTIALS,
-    };
-  }
+  if (!context) throw new Error('useAuth must be used inside AuthProvider');
   return context;
 }
