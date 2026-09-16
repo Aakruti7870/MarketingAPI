@@ -22,6 +22,48 @@ function readStoredUser() {
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(readStoredUser);
+  const [sessionChecked, setSessionChecked] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const validateSession = async () => {
+      if (!user?.isAdmin) {
+        if (!cancelled) setSessionChecked(true);
+        return;
+      }
+      try {
+        const response = await fetch('/api/auth/session', {
+          method: 'GET',
+          credentials: 'include',
+          headers: user.sessionToken ? { Authorization: `Bearer ${user.sessionToken}` } : undefined,
+        });
+        if (!response.ok) {
+          if (!cancelled) setUser(null);
+          return;
+        }
+        const result = await response.json().catch(() => ({}));
+        if (!result.authenticated) {
+          if (!cancelled) setUser(null);
+          return;
+        }
+        if (!cancelled) {
+          setUser((current) => current ? {
+            ...current,
+            email: result.user?.email || current.email,
+            name: result.user?.name || current.name,
+            role: result.user?.role || current.role,
+            sessionIssuedAt: Number(current.sessionIssuedAt || Date.now()),
+          } : current);
+        }
+      } catch {
+        // Do not destroy a valid browser session because of a transient network error.
+      } finally {
+        if (!cancelled) setSessionChecked(true);
+      }
+    };
+    validateSession();
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     try {
@@ -38,6 +80,7 @@ export function AuthProvider({ children }) {
     try {
       const response = await fetch('/api/auth/admin-login', {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: cleanEmail, password }),
       });
@@ -56,6 +99,7 @@ export function AuthProvider({ children }) {
         sessionIssuedAt: Date.now(),
       };
       setUser(authenticatedUser);
+      setSessionChecked(true);
       return { success: true, user: authenticatedUser, message: result.message || 'Authenticated.' };
     } catch (error) {
       console.error('Authentication request failed:', error);
@@ -63,9 +107,19 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* ignore storage errors */ }
+  const logout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: user?.sessionToken ? { Authorization: `Bearer ${user.sessionToken}` } : undefined,
+      });
+    } catch {
+      // Local logout still completes if the server is unavailable.
+    } finally {
+      setUser(null);
+      try { sessionStorage.removeItem(STORAGE_KEY); } catch { /* ignore storage errors */ }
+    }
   };
 
   const activateAdminPass = async () => ({
@@ -77,7 +131,7 @@ export function AuthProvider({ children }) {
     <AuthContext.Provider
       value={{
         user,
-        isAdmin: user?.isAdmin === true,
+        isAdmin: user?.isAdmin === true && sessionChecked,
         isEverythingFree: user?.isEverythingFree === true,
         login,
         logout,
