@@ -2,17 +2,32 @@ import express, { Request, Response } from "express";
 import path from "path";
 import cors from "cors";
 import multer from "multer";
+import { createHmac, scryptSync, timingSafeEqual } from "crypto";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 
 const upload = multer({ storage: multer.memoryStorage() });
 
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT || 3000);
 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+const ADMIN_EMAIL = (process.env.LUMINA_ADMIN_EMAIL || "").trim().toLowerCase();
+const ADMIN_PASSWORD_HASH = process.env.LUMINA_ADMIN_PASSWORD_HASH || "";
+const ADMIN_PASSWORD_SALT = process.env.LUMINA_ADMIN_PASSWORD_SALT || "";
+const AUTH_SECRET = process.env.LUMINA_AUTH_SECRET || "";
+function verifyAdminPassword(password: string): boolean {
+  if (!ADMIN_EMAIL || !ADMIN_PASSWORD_HASH || !ADMIN_PASSWORD_SALT || !AUTH_SECRET) return false;
+  try { const derived = scryptSync(password, ADMIN_PASSWORD_SALT, 64).toString("hex"); return timingSafeEqual(Buffer.from(derived, "hex"), Buffer.from(ADMIN_PASSWORD_HASH, "hex")); } catch { return false; }
+}
+function issueSession(email: string): string {
+  const payload = Buffer.from(JSON.stringify({ email, role: "SUPER_ADMIN", iat: Date.now() })).toString("base64url");
+  const signature = createHmac("sha256", AUTH_SECRET).update(payload).digest("base64url");
+  return `${payload}.${signature}`;
+}
 
 // Lazy Google Gen AI initialization
 let aiClient: GoogleGenAI | null = null;
@@ -72,12 +87,6 @@ const user_wallets: Record<string, UserWallet> = {
     plan: "Growth Plan",
     plan_status: "active",
     total_spent_inr: 2999,
-  },
-  "krushnabade54@gmail.com": {
-    credits: 999999,
-    plan: "Super Admin Lifetime (Everything Free)",
-    plan_status: "active",
-    total_spent_inr: 0,
   },
   admin: {
     credits: 999999,
@@ -297,7 +306,7 @@ app.post("/api/billing/deduct", (req: Request, res: Response) => {
   const { user_id = "user_default", action_type, quantity = 1, credits } = req.body;
 
   // Super Admin: Everything Free Access bypass
-  if (user_id === "krushnabade54@gmail.com" || user_id === "admin" || user_id === "SUPER_ADMIN") {
+  if (user_id === "admin" || user_id === "SUPER_ADMIN") {
     return res.json({
       status: "success",
       deducted: 0,
@@ -805,30 +814,12 @@ app.delete("/api/admin/keys/clear", (req: Request, res: Response) => {
   });
 });
 
-// Admin authentication endpoint
+// Server-side administrator authentication. No credentials are shipped to the browser.
 app.post("/api/auth/admin-login", (req: Request, res: Response) => {
-  const { email, password } = req.body;
-  const cleanEmail = (email || "").trim().toLowerCase();
-  if (cleanEmail === "krushnabade54@gmail.com" && password === "Krushna@1208") {
-    return res.json({
-      success: true,
-      message: "Super Admin Authenticated. Everything Free Access Activated!",
-      token: `lumina_super_admin_${Date.now()}`,
-      user: {
-        email: "krushnabade54@gmail.com",
-        name: "Krushna Bade",
-        role: "SUPER_ADMIN",
-        isAdmin: true,
-        plan: "Super Admin Lifetime (Everything Free)",
-        credits: 999999,
-        isEverythingFree: true,
-      },
-    });
-  }
-  return res.status(401).json({
-    success: false,
-    message: "Invalid admin credentials. Please verify email and password.",
-  });
+  const cleanEmail = String(req.body?.email || "").trim().toLowerCase();
+  const password = String(req.body?.password || "");
+  if (!verifyAdminPassword(password) || cleanEmail !== ADMIN_EMAIL) return res.status(401).json({ success: false, message: "Invalid email or password." });
+  return res.json({ success: true, sessionToken: issueSession(cleanEmail), user: { email: cleanEmail, name: "Super Admin", role: "SUPER_ADMIN", isEverythingFree: true, credits: 999999, plan: "Super Admin Lifetime" }, message: "Authenticated." });
 });
 
 // AI Studio Playground Multi-Model Generation Endpoint
@@ -980,7 +971,7 @@ app.post("/api/playground/generate", async (req: Request, res: Response) => {
         "x-ratelimit-remaining": "Unlimited (Admin Pass)",
         "x-server-engine": "LUMINA360-Gateway/4.5",
       },
-      is_everything_free: user_id === "krushnabade54@gmail.com" || user_id === "admin",
+      is_everything_free: user_id === "admin",
     });
   } catch (error: any) {
     console.error("Playground generation error:", error);
