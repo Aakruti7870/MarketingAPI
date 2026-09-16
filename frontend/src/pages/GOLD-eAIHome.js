@@ -2,31 +2,43 @@ import React, { useEffect, useState } from 'react';
 import './GOLD-eAIHome.css';
 
 const slides = [
-  { title: 'TrackMyRMC', kicker: 'RMC PLANT MANAGEMENT', text: 'Real-time concrete logistics, transit mixer tracking and dispatch visibility.', image: '/gold-eai-carousel/trackmyrmc.svg', cta: 'Explore TrackMyRMC', href: '/industry-bots' },
-  { title: 'GOLD-e AI', kicker: 'SMART MARKETING AUTOMATION', text: 'AI-powered campaigns, lead generation, content and growth workflows in one workspace.', image: '/gold-eai-carousel/goldeai.svg', cta: 'Explore GOLD-e AI', href: '/ai-studio' },
-  { title: 'AutomationBot', kicker: 'AGENTIC BUSINESS AUTOMATION', text: 'Configure business agents for follow-ups, workflows and multi-channel execution.', image: '/gold-eai-carousel/automationbot.svg', cta: 'Activate Agent', href: '/industry-bots' },
-  { title: 'Free Perks', kicker: 'START WITHOUT FRICTION', text: 'Start with the Free plan, explore core tools and upgrade when your business is ready.', image: '/gold-eai-carousel/free-perks.svg', cta: 'Start Free', href: '/login' },
-  { title: 'One Platform', kicker: 'BUILT FOR EVERY BUSINESS', text: 'Connect marketing, sales, AI agents, operations and analytics through one platform.', image: '/gold-eai-carousel/one-platform.svg', cta: 'View Platform', href: '/pricing' },
+  { title: 'TrackMyRMC', kicker: 'REAL-TIME CONCRETE LOGISTICS', text: 'Track. Dispatch. Deliver.', image: 'https://images.unsplash.com/photo-1751221701301-b02ca1b4b49e?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=82&w=2200', cta: 'Explore', href: '/industry-bots' },
+  { title: 'GOLD-e AI', kicker: 'AI BUSINESS GROWTH', text: 'Create. Automate. Grow.', image: 'https://images.unsplash.com/photo-1646583288948-24548aedffd8?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=82&w=2200', cta: 'Explore', href: '/ai-studio' },
+  { title: 'AutomationBot', kicker: 'AGENTIC AUTOMATION', text: 'Workflows that keep moving.', image: 'https://images.unsplash.com/photo-1773558057882-5a9015d6db28?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=82&w=2200', cta: 'Activate', href: '/industry-bots' },
+  { title: 'Free Perks', kicker: 'START FREE', text: 'Try the essentials. Scale when ready.', image: 'https://images.unsplash.com/photo-1646583288948-24548aedffd8?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=82&w=2200', cta: 'Start Free', href: '/login' },
+  { title: 'One Platform', kicker: 'ONE CONNECTED WORKSPACE', text: 'Marketing. Sales. AI. One place.', image: 'https://images.unsplash.com/photo-1773558057882-5a9015d6db28?auto=format&fit=crop&fm=jpg&ixlib=rb-4.1.0&q=82&w=2200', cta: 'View Plans', href: '/pricing' },
 ];
-const industries = [['Healthcare', 'Appointments · Patients · Clinics'], ['Infrastructure', 'Projects · Site visits · Quotations'], ['B2B Business', 'Enquiries · Sales · Follow-up'], ['Small Business', 'Orders · Payments · Customer care'], ['Digital Marketing', 'Social · Ads · Campaigns · Leads']];
+
+const industries = ['Healthcare', 'Infrastructure', 'B2B', 'Small Business', 'Digital Marketing'];
 
 export default function GoldeAIHome() {
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
   useEffect(() => { if (paused) return undefined; const timer = window.setInterval(() => setActive((v) => (v + 1) % slides.length), 5500); return () => window.clearInterval(timer); }, [paused]);
   return <div className="gold-eai-shell">
-    <header className="gold-eai-header"><a className="gold-eai-brand" href="/" aria-label="GOLD-e AI home"><span className="gold-eai-brand-mark">G</span><span>GOLD-e AI<small>Build · Automate · Grow</small></span></a><nav className="gold-eai-nav" aria-label="Primary navigation"><a href="#home">Home</a><a href="#products">Products</a><a href="#industries">Industries</a><a href="#solutions">Solutions</a><a href="/pricing">Pricing</a><a href="#resources">Resources</a><a href="#company">Company</a></nav><a className="gold-eai-cta" href="/pricing">Get Started →</a></header>
+    <header className="gold-eai-header">
+      <a className="gold-eai-brand" href="/" aria-label="GOLD-e AI home"><span className="gold-eai-brand-mark">G</span><span>GOLD-e AI<small>Build · Automate · Grow</small></span></a>
+      <nav className="gold-eai-nav" aria-label="Primary navigation"><a href="#products">Products</a><a href="#industries">Industries</a><a href="#solutions">Solutions</a><a href="/pricing">Pricing</a><a href="#company">Company</a></nav>
+      <a className="gold-eai-cta" href="/pricing">Get Started →</a>
+    </header>
+
     <main className="gold-eai-main">
-      <section id="home" className="gold-eai-carousel-section" aria-label="GOLD-e AI product highlights" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
-        <div className="gold-eai-carousel-head"><div><span className="gold-eai-eyebrow">✦ One platform · multiple solutions</span><h1>Build. Automate. <span className="gold-eai-gradient-text">Grow.</span></h1><p>Explore GOLD-e AI, TrackMyRMC, AutomationBot, Free Perks and the connected business platform through an automatic product showcase.</p></div><div className="gold-eai-carousel-controls"><button aria-label="Previous slide" onClick={() => setActive((active - 1 + slides.length) % slides.length)}>←</button><button aria-label="Next slide" onClick={() => setActive((active + 1) % slides.length)}>→</button></div></div>
-        <div className="gold-eai-carousel-stage"><div className="gold-eai-carousel-track" style={{ transform: `translateX(-${active * 100}%)` }}>{slides.map((item) => <article className="gold-eai-carousel-slide" key={item.title}><img src={item.image} alt={`${item.title} GOLD-e AI product visual`} /><div className="gold-eai-slide-overlay"><span>{item.kicker}</span><h2>{item.title}</h2><p>{item.text}</p><a href={item.href}>{item.cta} →</a></div></article>)}</div></div>
+      <section id="home" className="gold-eai-carousel-section" aria-label="GOLD-e AI showcase" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
+        <div className="gold-eai-carousel-head">
+          <div><span className="gold-eai-eyebrow">✦ AI-powered business platform</span><h1>AI for business.<br/><span className="gold-eai-gradient-text">Without the clutter.</span></h1><p>Marketing · Sales · Automation.</p></div>
+          <div className="gold-eai-carousel-controls"><button aria-label="Previous" onClick={() => setActive((active - 1 + slides.length) % slides.length)}>←</button><button aria-label="Next" onClick={() => setActive((active + 1) % slides.length)}>→</button></div>
+        </div>
+        <div className="gold-eai-carousel-stage"><div className="gold-eai-carousel-track" style={{ transform: `translateX(-${active * 100}%)` }}>{slides.map((item, index) => <article className="gold-eai-carousel-slide" key={item.title}><img src={item.image} alt={`${item.title} GOLD-e AI visual`} loading={index === 0 ? 'eager' : 'lazy'} /><div className="gold-eai-slide-overlay"><span>{item.kicker}</span><h2>{item.title}</h2><p>{item.text}</p><a href={item.href}>{item.cta} →</a></div></article>)}</div></div>
         <div className="gold-eai-carousel-dots" role="tablist" aria-label="Product slides">{slides.map((item, index) => <button key={item.title} className={index === active ? 'active' : ''} aria-label={`Show ${item.title}`} aria-selected={index === active} onClick={() => setActive(index)} />)}</div>
-        <div className="gold-eai-carousel-status"><span>{paused ? 'Paused' : 'Auto-changing every 5.5 seconds'}</span><span>{active + 1} / {slides.length}</span></div>
       </section>
-      <section id="products" className="gold-eai-proof" aria-label="Platform highlights"><div><strong>500+</strong><span>Business workflows</span></div><div><strong>3×</strong><span>Faster execution</span></div><div><strong>70%</strong><span>Time-saving potential</span></div><div><strong>99.9%</strong><span>Availability target</span></div><div><strong>10+</strong><span>Business use cases</span></div><div><strong>Free</strong><span>Starter plan available</span></div></section>
-      <section id="industries" className="gold-eai-section"><span className="gold-eai-eyebrow">Built for every industry</span><h2>Choose your industry.<br/><span className="gold-eai-gradient-text">Activate AI agents.</span></h2><p className="gold-eai-section-intro">Pre-built agent experiences are organized around the way businesses operate. Select a business type and configure its agent from one platform.</p><div className="gold-eai-grid">{industries.map(([name, desc]) => <a className="gold-eai-industry" href="/industry-bots" key={name}><span className="gold-eai-industry-icon">✦</span><h3>{name}</h3><p>{desc}</p><span className="gold-eai-arrow">→</span></a>)}</div></section>
-      <section id="solutions" className="gold-eai-section gold-eai-split"><div><span className="gold-eai-eyebrow">One connected platform</span><h2>From first lead to loyal customer.</h2></div><p className="gold-eai-section-intro">Connect your website, marketing, sales and business operations through a consistent AI layer. Start free, configure your business agent, and expand as your needs grow.</p></section>
+
+      <section id="products" className="gold-eai-proof" aria-label="Platform highlights"><div><strong>AI</strong><span>Business agents</span></div><div><strong>CRM</strong><span>Lead to sale</span></div><div><strong>Auto</strong><span>Workflows</span></div><div><strong>WA</strong><span>Connected channels</span></div></section>
+
+      <section id="industries" className="gold-eai-section"><span className="gold-eai-eyebrow">Built for business</span><h2>One platform.<br/><span className="gold-eai-gradient-text">Your way.</span></h2><div className="gold-eai-grid">{industries.map((name) => <a className="gold-eai-industry" href="/industry-bots" key={name}><span className="gold-eai-industry-icon">✦</span><h3>{name}</h3><span className="gold-eai-arrow">→</span></a>)}</div></section>
+
+      <section id="solutions" className="gold-eai-section gold-eai-split"><div><span className="gold-eai-eyebrow">Simple by design</span><h2>Build. Automate. Grow.</h2></div><a className="gold-eai-btn gold-eai-btn-primary" href="/pricing">Choose your plan →</a></section>
     </main>
-    <footer className="gold-eai-footer" id="company"><div><a className="gold-eai-brand" href="/"><span className="gold-eai-brand-mark">G</span><span>GOLD-e AI<small>Build · Automate · Grow</small></span></a><p>Agentic AI for modern businesses.</p></div><div><a href="/">About</a><a href="#products">Products</a><a href="#industries">Industries</a><a href="#solutions">Solutions</a><a href="/pricing">Pricing</a><a href="#resources">Resources</a></div><div><span>© 2026 GOLD-e AI</span><br/><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/sitemap.xml">Sitemap</a></div></footer>
+
+    <footer className="gold-eai-footer" id="company"><div><a className="gold-eai-brand" href="/"><span className="gold-eai-brand-mark">G</span><span>GOLD-e AI<small>Build · Automate · Grow</small></span></a></div><div><a href="#products">Products</a><a href="#industries">Industries</a><a href="#solutions">Solutions</a><a href="/pricing">Pricing</a></div><div><span>© 2026 GOLD-e AI</span><br/><a href="/privacy">Privacy</a><a href="/terms">Terms</a></div></footer>
   </div>;
 }
