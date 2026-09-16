@@ -25,19 +25,22 @@ jobs:
           path = Path('server.ts')
           source = path.read_text(encoding='utf-8')
           routes = [
-              'app.get("/api/admin/keys",',
-              'app.post("/api/admin/keys/save",',
-              'app.post("/api/admin/keys/verify",',
-              'app.post("/api/admin/keys/verify-all",',
-              'app.delete("/api/admin/keys/clear",',
+              ('app.get("/api/admin/keys",', 'app.get("/api/admin/keys", requireAdminSession,'),
+              ('app.post("/api/admin/keys/save",', 'app.post("/api/admin/keys/save", requireAdminSession,'),
+              ('app.post("/api/admin/keys/verify",', 'app.post("/api/admin/keys/verify", requireAdminSession,'),
+              ('app.post("/api/admin/keys/verify-all",', 'app.post("/api/admin/keys/verify-all", requireAdminSession,'),
+              ('app.delete("/api/admin/keys/clear",', 'app.delete("/api/admin/keys/clear", requireAdminSession,'),
           ]
           changed = False
-          for route in routes:
-              if route not in source:
-                  raise SystemExit(f'Expected sensitive admin route not found: {route}')
-              protected = route[:-1] + ' requireAdminSession,'
-              if protected not in source:
-                  source = source.replace(route, protected, 1)
+          for original, protected in routes:
+              malformed = original[:-1] + ' requireAdminSession,'
+              if malformed in source:
+                  source = source.replace(malformed, protected, 1)
+                  changed = True
+              elif protected not in source:
+                  if original not in source:
+                      raise SystemExit(f'Expected sensitive admin route not found: {original}')
+                  source = source.replace(original, protected, 1)
                   changed = True
           path.write_text(source, encoding='utf-8')
           print('Admin API authorization:', 'updated' if changed else 'already enforced')
@@ -54,7 +57,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add server.ts
-          git commit -m 'Enforce admin API session authorization'
+          git commit -m 'Fix admin API session authorization syntax'
           git push origin HEAD:main
 
       - name: Validate authentication hardening
