@@ -7,9 +7,9 @@ const ALLOWED = new Set(["light", "dark", "system"]);
 function initialTheme() {
   try {
     const saved = window.localStorage.getItem(STORAGE_KEY);
-    return ALLOWED.has(saved) ? saved : "system";
+    return ALLOWED.has(saved) ? saved : "light";
   } catch {
-    return "system";
+    return "light";
   }
 }
 
@@ -44,11 +44,7 @@ export function ThemeProvider({ children }) {
 
   const toggleTheme = () => setThemeState(resolvedTheme === "dark" ? "light" : "dark");
 
-  const value = useMemo(
-    () => ({ theme, resolvedTheme, setTheme, toggleTheme }),
-    [theme, resolvedTheme],
-  );
-
+  const value = useMemo(() => ({ theme, resolvedTheme, setTheme, toggleTheme }), [theme, resolvedTheme]);
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
