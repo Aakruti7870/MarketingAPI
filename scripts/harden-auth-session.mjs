@@ -38,7 +38,8 @@ function verifyAdminPassword(password: string): boolean {
 
 function issueSession(email: string): string {
   if (!AUTH_SECRET) throw new Error("Authentication service is not configured");
-  const payload = Buffer.from(JSON.stringify({ email, role: "SUPER_ADMIN", iat: Date.now(), exp: Date.now() + SESSION_TTL_MS })).toString("base64url");
+  const now = Date.now();
+  const payload = Buffer.from(JSON.stringify({ email, role: "SUPER_ADMIN", iat: now, exp: now + SESSION_TTL_MS })).toString("base64url");
   const signature = createHmac("sha256", AUTH_SECRET).update(payload).digest("base64url");
   return `${payload}.${signature}`;
 }
@@ -62,7 +63,7 @@ function verifySession(token: string): { email: string; role: string; iat: numbe
     if (actual.length !== expectedBuffer.length || !timingSafeEqual(actual, expectedBuffer)) return null;
     const session = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
     if (session.role !== "SUPER_ADMIN" || session.email !== ADMIN_EMAIL) return null;
-    if (!Number.isFinite(session.exp) || Date.now() >= session.exp) return null;
+    if (!Number.isFinite(session.iat) || !Number.isFinite(session.exp) || session.exp <= session.iat || Date.now() >= session.exp) return null;
     const revokedUntil = revokedSessions.get(token);
     if (revokedUntil && revokedUntil > Date.now()) return null;
     return session;
@@ -90,22 +91,22 @@ if (source.includes("const SESSION_TTL_MS = 8 * 60 * 60 * 1000;") && source.incl
 let updated = fs.readFileSync(file, "utf8");
 const loginMarker = `// Server-side administrator authentication. No credentials are shipped to the browser.`;
 const loginStart = updated.indexOf(loginMarker);
-const loginEnd = updated.indexOf("\n\n", updated.indexOf("app.post(\"/api/auth/admin-login\"", loginStart));
-if (loginStart === -1 || loginEnd === -1) throw new Error("Admin login route was not found");
+const loginRouteStart = updated.indexOf(`app.post("/api/auth/admin-login"`, loginStart);
+const loginEnd = updated.indexOf("\n\n", loginRouteStart);
+if (loginStart === -1 || loginRouteStart === -1 || loginEnd === -1) throw new Error("Admin login route was not found");
 const loginBlock = updated.slice(loginStart, loginEnd);
-if (!loginBlock.includes("Set-Cookie") && !loginBlock.includes("setHeader(\"Set-Cookie\"")) {
-  const hardenedLogin = loginBlock
-    .replace(
-      `const sessionToken = issueSession(cleanEmail);`,
-      `const sessionToken = issueSession(cleanEmail);\n  res.setHeader("Set-Cookie", \`lumina_session=\${encodeURIComponent(sessionToken)}; HttpOnly; Path=/; SameSite=Lax\${process.env.NODE_ENV === "production" ? "; Secure" : ""}\`);`
-    )
-    .replace(
-      `app.post("/api/auth/admin-login", (req: Request, res: Response) => {`,
-      `app.post("/api/auth/admin-login", (req: Request, res: Response) => {`
+if (!loginBlock.includes("Set-Cookie")) {
+  const inlineReturn = `return res.json({ success: true, sessionToken: issueSession(cleanEmail), user:`;
+  if (loginBlock.includes(inlineReturn)) {
+    const hardenedLogin = loginBlock.replace(
+      inlineReturn,
+      `const sessionToken = issueSession(cleanEmail);\n  res.setHeader("Set-Cookie", \`lumina_session=\${encodeURIComponent(sessionToken)}; HttpOnly; Path=/; SameSite=Lax\${process.env.NODE_ENV === "production" ? "; Secure" : ""}\`);\n  return res.json({ success: true, sessionToken, user:`
     );
-  if (hardenedLogin === loginBlock) throw new Error("Could not locate session issuance in admin login route");
-  updated = updated.slice(0, loginStart) + hardenedLogin + updated.slice(loginEnd);
-  fs.writeFileSync(file, updated);
+    updated = updated.slice(0, loginStart) + hardenedLogin + updated.slice(loginEnd);
+    fs.writeFileSync(file, updated);
+  } else {
+    throw new Error("Could not locate inline session issuance in admin login route");
+  }
 }
 
 updated = fs.readFileSync(file, "utf8");
@@ -117,5 +118,5 @@ if (!updated.includes("app.get(\"/api/auth/session\"")) {
   fs.writeFileSync(file, updated);
 }
 
-fs.unlinkSync("AUTH_SESSION_HARDENING_REQUEST");
+if (fs.existsSync("AUTH_SESSION_HARDENING_REQUEST")) fs.unlinkSync("AUTH_SESSION_HARDENING_REQUEST");
 console.log("Auth session migration complete.");
