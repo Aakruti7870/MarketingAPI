@@ -1,0 +1,1 @@
+Route target: /gold-e-ai-home. Wire this page into the existing application router and make it the public landing experience only after confirming the existing router's home route and auth flow.
