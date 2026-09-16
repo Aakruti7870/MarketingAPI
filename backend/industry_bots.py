@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-router = APIRouter(prefix="/api/industry-bots", tags=["industry-bots"])
+router = APIRouter(prefix="/industry-bots", tags=["industry-bots"])
 
 BOTS = [
  {"id":"healthcare","name":"Healthcare Smart Agent","industries":["Hospital","Medical","Laboratory","Saloon","Spa"],"capabilities":["Book appointment","Schedule time","Payment"],"actions":["check_availability","book_appointment","reschedule_appointment","send_payment_link","confirm_payment"],"channels":["web","whatsapp"]},
@@ -32,5 +32,4 @@ async def plan_action(bot_id: str, body: ActionRequest):
  bot = next((b for b in BOTS if b["id"] == bot_id), None)
  if not bot: raise HTTPException(status_code=404, detail="Industry bot not found")
  if body.action not in bot["actions"]: raise HTTPException(status_code=422, detail="Action is not supported by this bot")
- # This endpoint validates and returns an auditable action plan. External side effects remain behind existing provider/payment APIs.
  return {"bot_id":bot_id,"action":body.action,"status":"ready","payload":body.payload,"planned_at":datetime.now(timezone.utc).isoformat()}
