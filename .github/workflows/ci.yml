@@ -1,102 +1,131 @@
-name: Lumina360 CI
+name: Production Readiness
 
 on:
-  push:
-    branches: [main]
   pull_request:
-    branches: [main]
-  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - "feat/**"
+      - "fix/**"
 
 permissions:
   contents: read
 
-concurrency:
-  group: lumina360-ci-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  validate:
-    name: Typecheck and production build
+  frontend:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
+    defaults:
+      run:
+        working-directory: frontend
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: Typecheck
-        run: npm run lint
-
-      - name: Production build
-        run: npm run build
-
-      - name: Verify build output
-        run: test -f dist/server.cjs && test -f dist/index.html
-
-      - name: Upload production build
-        uses: actions/upload-artifact@v4
-        with:
-          name: lumina360-production-${{ github.sha }}
-          path: dist
-          if-no-files-found: error
-          retention-days: 7
-
-  healthcheck:
-    name: Production server smoke test
-    needs: validate
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: Build
-        run: npm run build
-
-      - name: Start server
+          node-version: "20"
+      - run: npm install --no-audit --no-fund
+      - run: npm run build
         env:
-          NODE_ENV: production
-          PORT: 3000
-        run: |
-          nohup node dist/server.cjs > /tmp/lumina360-server.log 2>&1 &
-          echo $! > /tmp/lumina360-server.pid
+          REACT_APP_BACKEND_URL: ""
 
-      - name: Wait for health endpoint
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r backend/requirements.txt
+      - name: Compile and import Cloud Run app
+        env:
+          MONGO_URL: mongodb://127.0.0.1:27017
+          DB_NAME: marketingapi_ci
+          JWT_SECRET: ci-only-secret-that-is-long-enough
+          SEED_DEMO_DATA: "false"
+          ENABLE_SIMULATION: "false"
+          CRON_SECRET: ci-cron-secret
         run: |
-          for i in {1..30}; do
-            if curl --fail --silent http://127.0.0.1:3000/health > /tmp/health.json; then
-              cat /tmp/health.json
+          python -m compileall -q backend
+          PYTHONPATH=backend python -c "import production; assert production.app"
+
+  e2e:
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r backend/requirements-dev.txt
+      - name: Start production API
+        env:
+          MONGO_URL: mongodb://127.0.0.1:27017
+          DB_NAME: marketingapi_e2e
+          JWT_SECRET: e2e-only-secret-that-must-never-be-used-in-production
+          SEED_DEMO_DATA: "false"
+          ENABLE_SIMULATION: "true"
+          ENABLE_IN_PROCESS_AUTOPILOT: "false"
+          META_WEBHOOK_VERIFY_TOKEN: e2e-meta-verify
+          CRON_SECRET: e2e-cron-secret
+          CASHFREE_CLIENT_ID: e2e-cashfree-client
+          CASHFREE_CLIENT_SECRET: e2e-cashfree-secret
+          CASHFREE_ENV: sandbox
+          APP_ENV: test
+        run: |
+          PYTHONPATH=backend uvicorn production:app --host 127.0.0.1 --port 8000 > /tmp/marketingapi.log 2>&1 &
+          echo $! > /tmp/marketingapi.pid
+          for i in $(seq 1 40); do
+            if curl --fail --silent http://127.0.0.1:8000/api/health >/dev/null; then
               exit 0
             fi
             sleep 1
           done
-          cat /tmp/lumina360-server.log || true
+          cat /tmp/marketingapi.log
           exit 1
-
-      - name: Stop server
+      - name: Run HTTP E2E suite
+        env:
+          TEST_BACKEND_URL: http://127.0.0.1:8000
+        run: pytest -q backend/tests
+      - name: Show API log
         if: always()
-        run: |
-          if [ -f /tmp/lumina360-server.pid ]; then
-            kill "$(cat /tmp/lumina360-server.pid)" 2>/dev/null || true
-          fi
+        run: cat /tmp/marketingapi.log || true
 
-# CI trigger: validate the current main branch after authentication hardening.
+  container:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t marketingapi:ci .
+
+  deployment-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml==6.0.2
+      - name: Validate Firebase and Cloud Build config
+        run: |
+          python -m json.tool firebase.json >/dev/null
+          python - <<'PY'
+          import pathlib, yaml
+          data = yaml.safe_load(pathlib.Path('cloudbuild.yaml').read_text())
+          steps = data.get('steps') or []
+          ids = [step.get('id') for step in steps]
+          assert isinstance(steps, list) and len(steps) >= 9
+          assert 'ensure-artifact-registry' in ids
+          assert 'deploy-cloud-run' in ids
+          assert 'verify-cloud-run' in ids
+          assert 'deploy-firebase-hosting' in ids
+          assert 'verify-public-release' in ids
+          assert ids.index('verify-cloud-run') > ids.index('deploy-cloud-run')
+          assert ids.index('verify-public-release') > ids.index('deploy-firebase-hosting')
+          cloudrun = next(step for step in steps if step.get('id') == 'verify-cloud-run')
+          public = next(step for step in steps if step.get('id') == 'verify-public-release')
+          assert '/api/health' in str(cloudrun)
+          assert '/api/health' in str(public)
+          assert '/api/version' in str(public)
+          PY

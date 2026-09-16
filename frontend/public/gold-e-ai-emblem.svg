@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">GOLD-e AI emblem</title>
+  <desc id="desc">A premium geometric G emblem with purple, pink and champagne-gold glass facets and orbit lines.</desc>
+  <defs>
+    <linearGradient id="violet" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5B50FF"/>
+      <stop offset="0.48" stop-color="#8A4DFF"/>
+      <stop offset="1" stop-color="#EC4BC6"/>
+    </linearGradient>
+    <linearGradient id="violetDeep" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#332A8E"/>
+      <stop offset="0.5" stop-color="#6C3CD1"/>
+      <stop offset="1" stop-color="#CA3DB2"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFF3C4"/>
+      <stop offset="0.35" stop-color="#E7C77B"/>
+      <stop offset="0.72" stop-color="#B88735"/>
+      <stop offset="1" stop-color="#F4D99A"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity=".72"/>
+      <stop offset=".5" stop-color="#DCCBFF" stop-opacity=".34"/>
+      <stop offset="1" stop-color="#FDA7EA" stop-opacity=".18"/>
+    </linearGradient>
+    <linearGradient id="orbit" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#6E56FF" stop-opacity=".12"/>
+      <stop offset=".4" stop-color="#8E58FF" stop-opacity=".82"/>
+      <stop offset=".78" stop-color="#EA4EC4" stop-opacity=".78"/>
+      <stop offset="1" stop-color="#E7C77B" stop-opacity=".12"/>
+    </linearGradient>
+    <filter id="shadow" x="-40%" y="-40%" width="180%" height="180%">
+      <feDropShadow dx="0" dy="28" stdDeviation="34" flood-color="#6D3FE0" flood-opacity=".18"/>
+      <feDropShadow dx="0" dy="7" stdDeviation="10" flood-color="#45227B" flood-opacity=".16"/>
+    </filter>
+    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="11" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <g opacity=".96" fill="none" stroke-linecap="round">
+    <circle cx="512" cy="512" r="398" stroke="url(#orbit)" stroke-width="9" stroke-dasharray="430 74 210 62" transform="rotate(-18 512 512)"/>
+    <circle cx="512" cy="512" r="350" stroke="url(#orbit)" stroke-width="4" stroke-dasharray="230 58 126 38" transform="rotate(31 512 512)" opacity=".52"/>
+    <circle cx="512" cy="512" r="438" stroke="#8E58FF" stroke-opacity=".14" stroke-width="2"/>
+  </g>
+
+  <g filter="url(#shadow)">
+    <polygon points="214,304 448,164 565,232 360,374 360,635 214,552" fill="url(#violetDeep)"/>
+    <polygon points="214,304 360,374 565,232 448,164" fill="url(#violet)" opacity=".98"/>
+    <polygon points="214,552 360,635 574,765 471,858 214,706" fill="url(#gold)"/>
+    <polygon points="448,164 565,232 784,347 675,431 565,232" fill="url(#gold)" opacity=".98"/>
+    <polygon points="675,431 784,347 784,663 642,744 642,584 675,565" fill="url(#glass)" stroke="#FFFFFF" stroke-opacity=".55" stroke-width="8"/>
+    <polyline points="226,309 361,383 555,247" fill="none" stroke="#FFFFFF" stroke-opacity=".48" stroke-width="7"/>
+    <polyline points="224,552 360,626 563,752" fill="none" stroke="#FFF6DD" stroke-opacity=".52" stroke-width="7"/>
+    <polyline points="457,172 565,239 772,348" fill="none" stroke="#FFF7DD" stroke-opacity=".55" stroke-width="7"/>
+    <polyline points="221,313 221,696 466,842" fill="none" stroke="#EACFFF" stroke-opacity=".3" stroke-width="5"/>
+    <polygon points="452,415 597,500 452,588" fill="url(#violet)"/>
+    <polygon points="452,588 597,500 597,617 519,658 452,620" fill="url(#gold)"/>
+    <polygon points="452,415 597,500 533,536 452,491" fill="#FFFFFF" fill-opacity=".14"/>
+    <polyline points="456,422 588,500 456,579" fill="none" stroke="#FFFFFF" stroke-opacity=".42" stroke-width="6"/>
+  </g>
+
+  <g fill="none" stroke="#7C4DFF" stroke-opacity=".27" stroke-width="5" stroke-linecap="round">
+    <path d="M344 232h70l30 30h48"/>
+    <path d="M598 705h64l38-38h54"/>
+    <path d="M300 752h76l28 28h62"/>
+  </g>
+  <g fill="#9B6CFF" opacity=".42">
+    <circle cx="341" cy="232" r="7"/><circle cx="492" cy="262" r="7"/>
+    <circle cx="598" cy="705" r="7"/><circle cx="754" cy="667" r="7"/>
+    <circle cx="300" cy="752" r="7"/><circle cx="466" cy="780" r="7"/>
+  </g>
+  <g fill="#FFFFFF" filter="url(#softGlow)">
+    <circle cx="758" cy="244" r="5" opacity=".82"/>
+    <circle cx="286" cy="789" r="4" opacity=".72"/>
+    <circle cx="824" cy="580" r="4" opacity=".58"/>
+  </g>
+</svg>
