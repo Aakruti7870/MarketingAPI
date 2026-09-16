@@ -2,8 +2,10 @@
 from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
+import agentic_platform
 
 router = APIRouter(prefix="/industry-bots", tags=["industry-bots"])
+router.include_router(agentic_platform.router, prefix="", tags=["agentic-platform"])
 
 BOTS = [
  {"id":"healthcare","name":"Healthcare Smart Agent","industries":["Hospital","Medical","Laboratory","Saloon","Spa"],"capabilities":["Book appointment","Schedule time","Payment"],"actions":["check_availability","book_appointment","reschedule_appointment","send_payment_link","confirm_payment"],"channels":["web","whatsapp"]},
