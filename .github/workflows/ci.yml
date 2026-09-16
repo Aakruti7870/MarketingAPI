@@ -98,3 +98,5 @@ jobs:
           if [ -f /tmp/lumina360-server.pid ]; then
             kill "$(cat /tmp/lumina360-server.pid)" 2>/dev/null || true
           fi
+
+# CI trigger: validate the current main branch after authentication hardening.
