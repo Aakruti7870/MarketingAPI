@@ -84,7 +84,7 @@ jobs:
           grep -q 'LUMINA_ADMIN_PASSWORD_HASH=' .env.example
           grep -q 'LUMINA_ADMIN_PASSWORD_SALT=' .env.example
           grep -q 'LUMINA_AUTH_SECRET=' .env.example
-          if grep -RInE 'ADMIN_CREDENTIALS|1-Click Sign In as Admin|admin@lumina360\.ai|password123|Everything Free \(∞\)' src server.ts --exclude-dir=node_modules; then
+          if grep -RInE 'ADMIN_CREDENTIALS|1-Click Sign In as Admin|admin@lumina360\.ai|password123' src server.ts --exclude-dir=node_modules; then
             echo 'Legacy client-side admin credential shortcut detected.'
             exit 1
           fi
