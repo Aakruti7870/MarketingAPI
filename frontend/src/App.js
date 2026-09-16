@@ -19,6 +19,7 @@ import Campaigns from "./pages/Campaigns";
 import Audiences from "./pages/Audiences";
 import Templates from "./pages/Templates";
 import AIStudio from "./pages/AIStudio";
+import IndustryBots from "./pages/IndustryBots";
 import Automations from "./pages/Automations";
 import Flows from "./pages/Flows";
 import Quotations from "./pages/Quotations";
@@ -32,96 +33,14 @@ import Channels from "./pages/Channels";
 import Workspace from "./pages/Workspace";
 import Pricing from "./pages/Pricing";
 import { PrivacyPolicy, TermsOfService, DataDeletion } from "./pages/LegalPages";
-
-function Protected({ children }) {
-  const { user } = useAuth();
-  if (user === null) return <div className="flex h-screen items-center justify-center bg-violet-50"><div className="brand-gradient h-10 w-10 animate-pulse rounded-xl shadow-brand" /></div>;
-  if (!user) return <Navigate to="/login" replace />;
-  return <Layout>{children}</Layout>;
-}
-
-function GuestOnly({ children }) {
-  const { user } = useAuth();
-  if (user) return <Navigate to="/assistant" replace />;
-  return children;
-}
-
-function ThemeAwareToaster() {
-  const { resolvedTheme } = useTheme();
-  return <Toaster position="top-right" richColors theme={resolvedTheme} />;
-}
-
-function PublicLegalLinks() {
-  return (
-    <div className="border-t border-slate-200/70 bg-white px-5 py-3 text-center text-[11px] font-semibold text-slate-500">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-5 gap-y-2">
-        <Link to="/privacy" className="hover:text-violet-700">Privacy Policy</Link>
-        <Link to="/terms" className="hover:text-violet-700">Terms of Service</Link>
-        <Link to="/data-deletion" className="hover:text-violet-700">Data Deletion</Link>
-      </div>
-    </div>
-  );
-}
-
-function PublicPage({ children, legal = true }) {
-  return (
-    <>
-      <div className="public-theme-control"><ThemeToggle /></div>
-      {children}
-      {legal && <PublicLegalLinks />}
-    </>
-  );
-}
-
-function SettingsWithPrivacy() {
-  return <><SettingsPage /><PrivacyRequestCard /></>;
-}
-
-export default function App() {
-  return (
-    <ThemeProvider>
-      <AuthProvider>
-        <BrowserRouter>
-          <ThemeAwareToaster />
-          <Routes>
-            <Route path="/" element={<PublicPage><Landing /></PublicPage>} />
-            <Route path="/pricing" element={<PublicPage><Pricing /></PublicPage>} />
-            <Route path="/privacy" element={<PublicPage legal={false}><PrivacyPolicy /></PublicPage>} />
-            <Route path="/terms" element={<PublicPage legal={false}><TermsOfService /></PublicPage>} />
-            <Route path="/data-deletion" element={<PublicPage legal={false}><DataDeletion /></PublicPage>} />
-            <Route path="/login" element={<GuestOnly><PublicPage><Auth /></PublicPage></GuestOnly>} />
-
-            <Route path="/assistant" element={<Protected><Assistant /></Protected>} />
-            <Route path="/explore" element={<Protected><ExplorePage /></Protected>} />
-            <Route path="/use-cases" element={<Protected><UseCasesPage /></Protected>} />
-            <Route path="/files" element={<Protected><FilesPage /></Protected>} />
-            <Route path="/history" element={<Protected><HistoryPage /></Protected>} />
-            <Route path="/settings" element={<Protected><SettingsWithPrivacy /></Protected>} />
-
-            <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
-            <Route path="/leads" element={<Protected><Leads /></Protected>} />
-            <Route path="/pipeline" element={<Protected><Pipeline /></Protected>} />
-            <Route path="/inbox" element={<Protected><Inbox /></Protected>} />
-            <Route path="/campaigns" element={<Protected><Campaigns /></Protected>} />
-            <Route path="/audiences" element={<Protected><Audiences /></Protected>} />
-            <Route path="/templates" element={<Protected><Templates /></Protected>} />
-            <Route path="/ai-studio" element={<Protected><AIStudio /></Protected>} />
-            <Route path="/automations" element={<Protected><Automations /></Protected>} />
-            <Route path="/flows" element={<Protected><Flows /></Protected>} />
-            <Route path="/quotations" element={<Protected><Quotations /></Protected>} />
-            <Route path="/consent" element={<Protected><Consent /></Protected>} />
-            <Route path="/analytics" element={<Protected><Analytics /></Protected>} />
-            <Route path="/developer" element={<Protected><Developer /></Protected>} />
-            <Route path="/whatsapp" element={<Protected><Channels /></Protected>} />
-            <Route path="/whatsapp-connection" element={<Protected><WhatsApp /></Protected>} />
-            <Route path="/channels" element={<Protected><Channels /></Protected>} />
-            <Route path="/team" element={<Protected><Team /></Protected>} />
-            <Route path="/vault" element={<Protected><Vault /></Protected>} />
-            <Route path="/workspace" element={<Protected><Workspace /></Protected>} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </BrowserRouter>
-      </AuthProvider>
-    </ThemeProvider>
-  );
-}
+function Protected({ children }) { const { user } = useAuth(); if (user === null) return <div className="flex h-screen items-center justify-center bg-violet-50"><div className="brand-gradient h-10 w-10 animate-pulse rounded-xl shadow-brand" /></div>; if (!user) return <Navigate to="/login" replace />; return <Layout>{children}</Layout>; }
+function GuestOnly({ children }) { const { user } = useAuth(); if (user) return <Navigate to="/assistant" replace />; return children; }
+function ThemeAwareToaster() { const { resolvedTheme } = useTheme(); return <Toaster position="top-right" richColors theme={resolvedTheme} />; }
+function PublicLegalLinks() { return <div className="border-t border-slate-200/70 bg-white px-5 py-3 text-center text-[11px] font-semibold text-slate-500"><div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-5 gap-y-2"><Link to="/privacy" className="hover:text-violet-700">Privacy Policy</Link><Link to="/terms" className="hover:text-violet-700">Terms of Service</Link><Link to="/data-deletion" className="hover:text-violet-700">Data Deletion</Link></div></div>; }
+function PublicPage({ children, legal = true }) { return <><div className="public-theme-control"><ThemeToggle /></div>{children}{legal && <PublicLegalLinks />}</>; }
+function SettingsWithPrivacy() { return <><SettingsPage /><PrivacyRequestCard /></>; }
+export default function App() { return <ThemeProvider><AuthProvider><BrowserRouter><ThemeAwareToaster /><Routes>
+<Route path="/" element={<PublicPage><Landing /></PublicPage>} /><Route path="/pricing" element={<PublicPage><Pricing /></PublicPage>} /><Route path="/privacy" element={<PublicPage legal={false}><PrivacyPolicy /></PublicPage>} /><Route path="/terms" element={<PublicPage legal={false}><TermsOfService /></PublicPage>} /><Route path="/data-deletion" element={<PublicPage legal={false}><DataDeletion /></PublicPage>} /><Route path="/login" element={<GuestOnly><PublicPage><Auth /></PublicPage></GuestOnly>} />
+<Route path="/assistant" element={<Protected><Assistant /></Protected>} /><Route path="/explore" element={<Protected><ExplorePage /></Protected>} /><Route path="/use-cases" element={<Protected><UseCasesPage /></Protected>} /><Route path="/files" element={<Protected><FilesPage /></Protected>} /><Route path="/history" element={<Protected><HistoryPage /></Protected>} /><Route path="/settings" element={<Protected><SettingsWithPrivacy /></Protected>} />
+<Route path="/dashboard" element={<Protected><Dashboard /></Protected>} /><Route path="/leads" element={<Protected><Leads /></Protected>} /><Route path="/pipeline" element={<Protected><Pipeline /></Protected>} /><Route path="/inbox" element={<Protected><Inbox /></Protected>} /><Route path="/campaigns" element={<Protected><Campaigns /></Protected>} /><Route path="/audiences" element={<Protected><Audiences /></Protected>} /><Route path="/templates" element={<Protected><Templates /></Protected>} /><Route path="/ai-studio" element={<Protected><AIStudio /></Protected>} /><Route path="/industry-bots" element={<Protected><IndustryBots /></Protected>} /><Route path="/automations" element={<Protected><Automations /></Protected>} /><Route path="/flows" element={<Protected><Flows /></Protected>} /><Route path="/quotations" element={<Protected><Quotations /></Protected>} /><Route path="/consent" element={<Protected><Consent /></Protected>} /><Route path="/analytics" element={<Protected><Analytics /></Protected>} /><Route path="/developer" element={<Protected><Developer /></Protected>} /><Route path="/whatsapp" element={<Protected><Channels /></Protected>} /><Route path="/whatsapp-connection" element={<Protected><WhatsApp /></Protected>} /><Route path="/channels" element={<Protected><Channels /></Protected>} /><Route path="/team" element={<Protected><Team /></Protected>} /><Route path="/vault" element={<Protected><Vault /></Protected>} /><Route path="/workspace" element={<Protected><Workspace /></Protected>} /><Route path="*" element={<Navigate to="/" replace />} />
+</Routes></BrowserRouter></AuthProvider></ThemeProvider>; }
