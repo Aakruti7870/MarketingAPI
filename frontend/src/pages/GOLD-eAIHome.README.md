@@ -1,1 +1,0 @@
-This page is the premium GOLD-e AI dark/gold visual system based on the supplied colour-grading reference. The route should be wired as the public home page in the application's existing router.
