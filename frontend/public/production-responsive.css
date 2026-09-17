@@ -1,0 +1,25 @@
+/* GOLD-e AI production responsive layer */
+html,body,#root{width:100%;min-width:0;overflow-x:hidden}
+img,svg,video,canvas{max-width:100%}
+button,input,select,textarea{min-width:0}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #7c4d18;outline-offset:2px}
+
+@media (max-width:1100px){
+  .hero{grid-template-columns:1fr;gap:28px;padding:64px 0}.hero-copy h1{max-width:900px}.hero-art{min-height:430px}
+  .manifesto-grid,.split{grid-template-columns:1fr;gap:34px}.split-art{min-height:400px}
+  .feature-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.price-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .workspace aside{width:220px}.workspace aside.collapsed{width:72px}.dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dash-card{grid-row:span 2}
+  .studio-grid,.module-grid{grid-template-columns:1fr!important}.module-side{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}.side-panel{height:100%}
+}
+
+@media (max-width:760px){
+  .public-nav{height:64px;padding:0 18px}.public-nav nav{gap:12px}.public-nav nav a{display:none}.public-nav .dark-btn{padding:9px 11px}.public-nav .text-btn{display:inline-flex}.mobile-menu{display:grid}
+  .hero,.manifesto,.feature-section,.split,.pricing-public{width:calc(100% - 32px);padding:64px 0}.hero{min-height:auto;padding-top:48px}.hero-copy h1{font-size:clamp(42px,13vw,64px)}.hero-copy p{font-size:15px}.hero-meta{gap:12px;margin-top:30px}.hero-art{min-height:320px}.manifesto-grid{gap:20px}.manifesto h2,.section-head h2,.split-copy h2,.pricing-public h2{font-size:clamp(34px,10vw,48px)}
+  .feature-grid,.price-grid{grid-template-columns:1fr}.feature-card{min-height:300px}.split-art{min-height:320px}.points>div{grid-template-columns:1fr;gap:7px}
+  .auth-page{grid-template-columns:1fr;min-height:100dvh}.auth-art{display:none}.auth-card{min-height:100dvh;padding:32px 22px;max-width:none}.auth-card h2{font-size:40px}
+  .workspace{display:block}.workspace aside,.workspace aside.collapsed{position:fixed;left:0;top:0;bottom:0;width:min(300px,86vw);height:100dvh;transform:translateX(-105%);transition:transform .22s ease;box-shadow:18px 0 50px rgba(0,0,0,.14);padding:18px 12px}.workspace aside.mobile-open{transform:translateX(0)}.workspace aside.collapsed .side-brand span:not(.brand-mark),.workspace aside.collapsed .workspace-name,.workspace aside.collapsed nav button span,.workspace aside.collapsed .side-bottom span{display:initial}.side-close{display:grid;margin-left:auto;border:0;background:transparent}.mobile-nav-toggle{display:grid}.collapse{display:none}.app-top{height:62px;padding:0 14px;gap:10px}.crumb{font-size:11px}.top-actions{gap:6px}.coin{padding:6px 7px}.icon-btn{width:32px;height:32px}.avatar{width:32px;height:32px}.app-content{padding:24px 14px 90px}.app-heading{align-items:flex-start;flex-direction:column;gap:16px;margin-bottom:22px}.app-heading h1{font-size:38px}.app-heading p{font-size:13px;line-height:1.5}.dashboard-grid{grid-template-columns:1fr;gap:10px}.dash-card{grid-row:auto;min-height:410px;padding:20px}.dash-card h2{font-size:30px}.dash-art{width:65%;height:38%}.metric-card{min-height:140px;padding:18px}.metric-card strong{font-size:40px;margin-top:16px}.module-side{grid-template-columns:1fr}.action-grid{grid-template-columns:1fr!important}.studio-grid{gap:12px}.form-panel,.output-panel{padding:18px!important}.command-wrap{position:fixed!important;left:12px;right:12px;bottom:12px;z-index:50;box-shadow:0 10px 35px rgba(0,0,0,.14);background:#fff}.command-wrap input{font-size:13px}.command-wrap kbd{display:none}.command-result{left:12px!important;right:12px!important;bottom:72px!important;max-width:none!important}.panel{overflow:hidden}.table-card{overflow:auto}.feed-row{min-width:520px}
+}
+
+@media (max-width:420px){
+  .brand{gap:7px;font-size:13px}.brand-mark{width:28px;height:28px}.public-nav{padding:0 12px}.public-nav .dark-btn{font-size:11px}.hero,.manifesto,.feature-section,.split,.pricing-public{width:calc(100% - 24px)}.hero-art{min-height:270px}.hero-actions .dark-btn{width:100%}.auth-card{padding:26px 16px}.app-content{padding-left:10px;padding-right:10px}.app-top{padding:0 10px}.top-actions .coin{font-size:10px}.app-heading h1{font-size:34px}.dash-card{min-height:390px}.quick-actions{display:grid!important;grid-template-columns:1fr!important}.quick{width:100%}
+}
