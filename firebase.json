@@ -4,7 +4,7 @@
     "ignore": ["firebase.json","**/.*","**/node_modules/**"],
     "headers": [
       {"source":"/static/**","headers":[{"key":"Cache-Control","value":"public,max-age=31536000,immutable"}]},
-      {"source":"**","headers":[{"key":"X-Content-Type-Options","value":"nosniff"},{"key":"Referrer-Policy","value":"strict-origin-when-cross-origin"},{"key":"Permissions-Policy","value":"camera=(), microphone=(self), geolocation=()"}]}
+      {"source":"**","headers":[{"key":"X-Content-Type-Options","value":"nosniff"},{"key":"Referrer-Policy","value":"strict-origin-when-cross-origin"},{"key":"Permissions-Policy","value":"geolocation=(self)"}]}
     ],
     "rewrites": [
       {"source":"/api/**","run":{"serviceId":"marketingapi","region":"asia-south1","pinTag":true}},
