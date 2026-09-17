@@ -27,23 +27,391 @@ import contacts
 import core
 import flows
 import privacy
+import production_ai
+import production_guardrails
+import saas
+import secure_team
 import secure_vault
 import server
+import social
 import studio
-import multichannel
 
 app = server.app
 
-# Cloud Run serves the complete GOLD-e AI application. The React build is
-# copied into /app/frontend/build by the production Docker image.
+
+def _remove_route(path: str, methods: set[str]):
+    """Remove an explicitly superseded legacy route before adding its safe replacement."""
+    app.router.routes = [
+        route for route in app.router.routes
+        if not (
+            getattr(route, "path", None) == path
+            and bool(set(getattr(route, "methods", set()) or set()) & methods)
+        )
+    ]
+
+
+# Replace routes that had prototype-only or unsafe production semantics.
+_remove_route("/api/auth/register", {"POST"})
+_remove_route("/api/vault", {"GET", "POST"})
+_remove_route("/api/vault/{cid}", {"DELETE"})
+_remove_route("/api/team", {"GET", "POST"})
+_remove_route("/api/team/{uid}", {"DELETE"})
+_remove_route("/api/dashboard", {"GET"})
+_remove_route("/api/audit", {"GET"})
+_remove_route("/api/campaigns", {"POST"})
+_remove_route("/api/conversations/{cid}/reply", {"POST"})
+_remove_route("/api/consent/opt-outs", {"GET"})
+_remove_route("/api/consent/leads/{lead_id}", {"POST"})
+_remove_route("/api/ai/generate", {"POST"})
+_remove_route("/api/ai/marketing", {"POST"})
+_remove_route("/api/ai/command", {"POST"})
+_remove_route("/api/ai/poster", {"POST"})
+_remove_route("/api/quotations/ai-draft", {"POST"})
+_remove_route("/api/leads/import", {"POST"})
+
+production_guardrails.install()
+
+app.include_router(secure_vault.router)
+app.include_router(secure_team.router)
+app.include_router(billing.router)
+app.include_router(saas.router)
+app.include_router(privacy.router)
+app.include_router(production_ai.router)
+app.include_router(flows.router)
+app.include_router(contacts.router)
+app.include_router(channels.router)
+app.include_router(social.router)
+app.include_router(production_guardrails.router)
+
+
+def _env_bool(name: str, default: bool = False) -> bool:
+    value = os.environ.get(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
+
+
+server.llm_text = core.llm_text
+
+if not _env_bool("SEED_DEMO_DATA", False):
+    async def _skip_demo_seed():
+        return None
+
+    server.seed = _skip_demo_seed
+
+allowed_origins = [
+    origin.strip().rstrip("/")
+    for origin in os.environ.get("ALLOWED_ORIGINS", "").split(",")
+    if origin.strip()
+]
+for middleware in app.user_middleware:
+    if middleware.cls is CORSMiddleware:
+        middleware.kwargs["allow_origins"] = allowed_origins
+        middleware.kwargs["allow_credentials"] = False
+app.middleware_stack = None
+
+
+@app.post("/api/auth/register")
+async def production_register(body: server.RegisterIn):
+    """Every new workspace starts Free with a single non-renewing 100-coin grant."""
+    email = body.email.lower()
+    if await server.db.users.find_one({"email": email}):
+        raise HTTPException(status_code=400, detail="Email already registered")
+    ws_id = server.oid()
+    await server.db.workspaces.insert_one({
+        "id": ws_id,
+        "name": body.workspace_name,
+        "plan": "Free",
+        "billing_interval": None,
+        "subscription_status": "free",
+        "coin_balance": billing.FREE_COINS,
+        "coin_period": "lifetime",
+        "coin_lifetime_granted": billing.FREE_COINS,
+        "platform_api_key": "golde_" + pysecrets.token_urlsafe(24),
+        "created_at": server.now_iso(),
+    })
+    uid = server.oid()
+    await server.db.users.insert_one({
+        "id": uid,
+        "workspace_id": ws_id,
+        "email": email,
+        "password_hash": server.hash_password(body.password),
+        "name": body.name,
+        "role": "owner",
+        "avatar": "",
+        "created_at": server.now_iso(),
+    })
+    await server.audit(
+        ws_id,
+        {"id": uid, "name": body.name},
+        "workspace.created",
+        "workspace",
+        {"name": body.workspace_name, "plan": "Free", "free_coins": billing.FREE_COINS},
+    )
+    token = server.create_token(uid, ws_id, "owner")
+    return {
+        "token": token,
+        "user": {
+            "id": uid,
+            "email": email,
+            "name": body.name,
+            "role": "owner",
+            "workspace_id": ws_id,
+            "workspace_name": body.workspace_name,
+            "plan": "Free",
+            "coin_balance": billing.FREE_COINS,
+        },
+    }
+
+
+COIN_RULES = [
+    (re.compile(r"^/api/leads/[^/]+/rescore$"), billing.COIN_COSTS["lead_rescore"], "lead_rescore"),
+    (re.compile(r"^/api/conversations/[^/]+/(suggest|summarize)$"), billing.COIN_COSTS["conversation_ai"], "conversation_ai"),
+    (re.compile(r"^/api/quotations/ai-draft$"), billing.COIN_COSTS["quotation_ai"], "quotation_ai"),
+    (re.compile(r"^/api/ai/generate$"), billing.COIN_COSTS["ai_text"], "ai_text"),
+    (re.compile(r"^/api/ai/marketing$"), billing.COIN_COSTS["ai_marketing"], "ai_marketing"),
+    (re.compile(r"^/api/ai/command$"), billing.COIN_COSTS["ai_command"], "ai_command"),
+    (re.compile(r"^/api/ai/poster$"), billing.COIN_COSTS["ai_poster"], "ai_poster"),
+]
+
+
+def _coin_rule(path: str):
+    for pattern, cost, action in COIN_RULES:
+        if pattern.match(path):
+            return cost, action
+    return None
+
+
+@app.middleware("http")
+async def coin_meter(request: Request, call_next):
+    """Debit premium AI actions atomically and refund automatically on failed requests."""
+    if request.method != "POST":
+        return await call_next(request)
+    rule = _coin_rule(request.url.path)
+    if not rule or not request.headers.get("Authorization", "").startswith("Bearer "):
+        return await call_next(request)
+
+    try:
+        user = await server.get_current_user(request)
+    except HTTPException:
+        return await call_next(request)
+
+    cost, action = rule
+    try:
+        await billing.debit_coins(user["workspace_id"], cost, action, actor=user.get("id", "user"))
+    except HTTPException as exc:
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+
+    try:
+        response = await call_next(request)
+    except Exception:
+        await billing.refund_coins(user["workspace_id"], cost, action, actor=user.get("id", "user"))
+        raise
+
+    if response.status_code >= 400:
+        await billing.refund_coins(user["workspace_id"], cost, action, actor=user.get("id", "user"))
+    return response
+
+
+@app.get("/api/dashboard")
+async def production_dashboard(user: dict = Depends(server.get_current_user)):
+    payload = await server.dashboard(user)
+    payload = dict(payload)
+    kpis = dict(payload.get("kpis") or {})
+    kpis.pop("ai_cost", None)
+    kpis.pop("ai_budget", None)
+    kpis.pop("avg_response", None)
+    payload["kpis"] = kpis
+    return payload
+
+
+@app.get("/api/audit")
+async def production_audit(user: dict = Depends(server.require_role("owner", "admin"))):
+    return await server.audit_list(user)
+
+
+@app.post("/api/campaigns")
+async def production_campaign_create(
+    body: server.CampaignIn,
+    user: dict = Depends(server.get_current_user),
+):
+    studio_body = studio.CampaignIn(
+        name=body.name,
+        channel=body.channel,
+        segment=body.segment,
+        template_id=body.template_id,
+        message=body.message or "",
+        schedule_at=body.scheduled_at,
+    )
+    return await studio.create(studio_body, user)
+
+
+@app.post("/api/conversations/{cid}/reply")
+async def production_conversation_reply(
+    cid: str,
+    body: server.MessageIn,
+    user: dict = Depends(server.get_current_user),
+):
+    """Send a real provider reply, then return the mirrored inbox message."""
+    conversation = await server.db.conversations.find_one({
+        "id": cid,
+        "workspace_id": user["workspace_id"],
+    })
+    if not conversation:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    lead = await server.db.leads.find_one({
+        "id": conversation.get("lead_id"),
+        "workspace_id": user["workspace_id"],
+    })
+    if not lead:
+        raise HTTPException(status_code=404, detail="Conversation lead not found")
+
+    from multichannel import send_via_channel
+    result = await send_via_channel(
+        user["workspace_id"],
+        lead,
+        conversation.get("channel") or lead.get("channel") or "WhatsApp",
+        body.body,
+        actor=user.get("name", "user"),
+    )
+    if result.get("status") == "blocked":
+        raise HTTPException(status_code=409, detail={
+            "code": result.get("code"),
+            "message": result.get("reason") or "Consent Guard blocked this reply",
+        })
+    if result.get("status") == "failed":
+        raise HTTPException(status_code=502, detail={
+            "code": result.get("code") or "provider_send_failed",
+            "message": "Provider did not accept the message",
+        })
+
+    fresh = await server.db.conversations.find_one({"id": cid, "workspace_id": user["workspace_id"]})
+    messages = (fresh or {}).get("messages") or []
+    return messages[-1] if messages else {
+        "id": result.get("message_id"),
+        "from": "agent",
+        "author": user.get("name", "user"),
+        "body": body.body,
+        "at": server.now_iso(),
+    }
+
+
+@app.get("/api/consent/opt-outs")
+async def production_opt_outs(user: dict = Depends(server.get_current_user)):
+    ws = user["workspace_id"]
+    rows = await server.db.opt_out_registry.find({"workspace_id": ws}).sort("created_at", -1).to_list(500)
+    output = []
+    for row in rows:
+        lead = await server.db.leads.find_one({"id": row.get("lead_id"), "workspace_id": ws})
+        output.append({
+            "id": row.get("id") or str(row.get("lead_id")),
+            "lead_id": row.get("lead_id"),
+            "lead_name": lead.get("name", "Unknown") if lead else "Unknown",
+            "channel": row.get("channel"),
+            "reason": row.get("reason"),
+            "created_at": row.get("created_at"),
+        })
+    return output
+
+
+async def _ensure_social_identity_index(field: str):
+    """Keep social IDs unique without indexing ordinary leads whose ID is null."""
+    name = f"workspace_id_1_{field}_1"
+    partial_filter = {field: {"$type": "string"}}
+    indexes = await core.db.leads.index_information()
+    current = indexes.get(name)
+    if current and (
+        not current.get("unique")
+        or current.get("partialFilterExpression") != partial_filter
+    ):
+        await core.db.leads.drop_index(name)
+    await core.db.leads.create_index(
+        [("workspace_id", 1), (field, 1)],
+        name=name,
+        unique=True,
+        partialFilterExpression=partial_filter,
+    )
+
+
+@app.on_event("startup")
+async def production_indexes():
+    """Indexes and one-way safety migration needed by the production service."""
+    try:
+        await secure_vault.migrate_legacy_plaintext_metadata()
+        await core.db.workspaces.update_many(
+            {"plan": {"$in": ["Starter", "Growth", "Scale", "Enterprise"]}, "subscription_status": {"$ne": "active"}},
+            {"$set": {"plan": "Free"}},
+        )
+        await core.db.whatsapp_connections.create_index("phone_number_id", unique=True, sparse=True)
+        await core.db.channel_connections.create_index([("workspace_id", 1), ("channel", 1)], unique=True)
+        await core.db.messages.create_index([("workspace_id", 1), ("provider_id", 1)], sparse=True)
+        await _ensure_social_identity_index("instagram_scoped_id_hash")
+        await _ensure_social_identity_index("facebook_psid_hash")
+        await core.db.followups.create_index(
+            [("workspace_id", 1), ("followup_key", 1)], unique=True, sparse=True
+        )
+        await core.db.followups.create_index([("status", 1), ("due_at", 1)])
+        await core.db.campaigns.create_index([("status", 1), ("schedule_at", 1)])
+        await core.db.api_rate_limits.create_index("expires_at", expireAfterSeconds=0)
+        await core.db.api_usage.create_index([("workspace_id", 1), ("at", -1)])
+        await core.db.webhook_events.create_index([("workspace_id", 1), ("created_at", -1)])
+        await core.db.coin_ledger.create_index([("workspace_id", 1), ("created_at", -1)])
+        await core.db.billing_intents.create_index([("workspace_id", 1), ("created_at", -1)])
+        await core.db.deletion_requests.create_index([("workspace_id", 1), ("user_id", 1), ("requested_at", -1)])
+        await core.db.deletion_requests.create_index([("status", 1), ("requested_at", 1)])
+        await core.db.assistant_threads.create_index([("workspace_id", 1), ("user_id", 1), ("updated_at", -1)])
+        await core.db.assistant_messages.create_index([("workspace_id", 1), ("user_id", 1), ("thread_id", 1), ("created_at", 1)])
+        await core.db.flows.create_index([("workspace_id", 1), ("updated_at", -1)])
+        await core.db.flow_versions.create_index([("workspace_id", 1), ("flow_id", 1), ("version", 1)], unique=True)
+        await core.db.flow_sessions.create_index([("workspace_id", 1), ("flow_id", 1), ("status", 1), ("started_at", -1)])
+        await core.db.flow_sessions.create_index([("workspace_id", 1), ("user_id", 1), ("updated_at", -1)])
+        await core.db.flow_events.create_index([("workspace_id", 1), ("flow_id", 1), ("created_at", -1)])
+        await core.db.contact_imports.create_index("expires_at", expireAfterSeconds=0)
+        await core.db.contact_imports.create_index([("workspace_id", 1), ("created_at", -1)])
+        await core.db.broadcast_audiences.create_index([("workspace_id", 1), ("updated_at", -1)])
+        await core.db.leads.create_index([("workspace_id", 1), ("phone_hash", 1)], sparse=True)
+    except Exception as exc:
+        print(f"production startup hardening error: {type(exc).__name__}")
+
+
+@app.get("/api/health", include_in_schema=False)
+async def health():
+    try:
+        await server.db.command("ping")
+        return {
+            "status": "ok",
+            "service": os.environ.get("K_SERVICE", "marketingapi"),
+            "revision": os.environ.get("K_REVISION", "local"),
+            "database": "ok",
+        }
+    except Exception:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "error",
+                "service": os.environ.get("K_SERVICE", "marketingapi"),
+                "database": "unavailable",
+            },
+        )
+
+
+@app.get("/api/version", include_in_schema=False)
+async def version():
+    return {
+        "service": os.environ.get("K_SERVICE", "marketingapi"),
+        "revision": os.environ.get("K_REVISION", "local"),
+        "environment": os.environ.get("APP_ENV", "production"),
+    }
+
+
+# Serve the React production build directly from the same Cloud Run service.
 FRONTEND_DIR = Path("/app/frontend/build")
 if FRONTEND_DIR.exists():
     static_dir = FRONTEND_DIR / "static"
     if static_dir.exists():
         app.mount("/static", StaticFiles(directory=static_dir), name="frontend-static")
 
-# Keep all API routes above this point. This final route provides SPA fallback
-# for client-side routes such as /login, /app and /pricing.
+
 @app.get("/{path:path}", include_in_schema=False)
 async def serve_frontend(path: str):
     if path.startswith("api/"):
@@ -57,7 +425,3 @@ async def serve_frontend(path: str):
     if not index.is_file():
         raise HTTPException(status_code=404, detail="Frontend index not found")
     return FileResponse(index)
-
-
-# Production CORS and all existing production routes/middleware follow the
-# application setup already maintained in this module.
