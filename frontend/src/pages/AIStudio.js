@@ -19,7 +19,7 @@ const CAMPAIGNS = [
 
 const imgUrl = (u) => {
   if (!u) return null;
-  if (/^https?:\\/\\//i.test(u)) return u;
+  if (/^https?:\/\//i.test(u)) return u;
   return `${BACKEND_URL}${u}`;
 };
 
