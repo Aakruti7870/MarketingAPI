@@ -25,6 +25,7 @@ const BUSINESS_NAV = [
   { name: "Templates", icon: FileText, path: "/templates", description: "Reusable marketing templates" },
   { name: "Flows", icon: GitBranch, path: "/flows", badge: "NEW", description: "Visual automation flows" },
   { name: "Autopilot", icon: Zap, path: "/automations", description: "Automate recurring work" },
+  { name: "Automation Center", icon: GitBranch, path: "/automation-center", badge: "NEW", description: "Curated AI marketing workflows" },
   { name: "Analytics", icon: BarChart3, path: "/analytics", description: "Performance and insights" },
 ];
 const MORE_NAV = [
