@@ -6,7 +6,6 @@
 memory
 test_reports
 docs
-frontend
 cloudbuild.yaml
 firebase.json
 docker-compose.yml
