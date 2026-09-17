@@ -99,57 +99,32 @@ steps:
             --headers "X-Cron-Secret=$$CRON_SECRET"
         fi
 
-  - id: frontend-install
-    name: node:20-alpine
-    dir: frontend
-    entrypoint: npm
-    args:
-      - install
-      - --no-audit
-      - --no-fund
-
-  - id: frontend-build
-    name: node:20-alpine
-    dir: frontend
-    entrypoint: npm
-    env:
-      - REACT_APP_BACKEND_URL=
-    args:
-      - run
-      - build
-
-  - id: deploy-firebase-hosting
-    name: us-docker.pkg.dev/firebase-cli/us/firebase
-    args:
-      - deploy
-      - --project
-      - $PROJECT_ID
-      - --only
-      - hosting
-      - --non-interactive
-
   - id: verify-public-release
     name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
     entrypoint: bash
     args:
       - -ceu
       - |
-        echo "Verifying public release at ${_PUBLIC_ORIGIN}"
+        SERVICE_URL="$(gcloud run services describe '${_SERVICE}' --region '${_REGION}' --format='value(status.url)')"
+        echo "Verifying Cloud Run application: $${SERVICE_URL}"
         for attempt in $(seq 1 30); do
-          if HEALTH="$$(curl -fsS --max-time 15 '${_PUBLIC_ORIGIN}/api/health' 2>/dev/null)"; then
+          if BODY="$$(curl -fsS --max-time 15 "$${SERVICE_URL}/" 2>/dev/null)"; then
+            printf '%s' "$$BODY" | grep -q 'GOLD-e AI'
+            echo "Frontend served directly by Cloud Run."
+            HEALTH="$$(curl -fsS --max-time 15 "$${SERVICE_URL}/api/health")"
             echo "$$HEALTH"
             echo "$$HEALTH" | grep -q '"status":"ok"'
             echo "$$HEALTH" | grep -q '"database":"ok"'
-            VERSION="$$(curl -fsS --max-time 15 '${_PUBLIC_ORIGIN}/api/version')"
+            VERSION="$$(curl -fsS --max-time 15 "$${SERVICE_URL}/api/version")"
             echo "$$VERSION"
             echo "$$VERSION" | grep -q '"environment":"production"'
-            echo "Production release verified end to end."
+            echo "Cloud Run application verified."
             exit 0
           fi
-          echo "Public health attempt $$attempt/30 not ready"
+          echo "Cloud Run application attempt $$attempt/30 not ready"
           sleep 2
         done
-        echo "Public Firebase -> Cloud Run release verification failed"
+        echo "Cloud Run application verification failed"
         exit 1
 
 availableSecrets:
