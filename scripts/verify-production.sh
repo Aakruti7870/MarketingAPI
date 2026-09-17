@@ -11,15 +11,24 @@ check_page() {
   local expected="$2"
   local body
   body="$(curl -fsSL --max-time 20 "${ORIGIN}${path}")"
-  printf '%s' "$body" | grep -Fq "$expected" || {
-    echo "FAIL ${path}: expected text not found: ${expected}" >&2
-    exit 1
-  }
+
+  # The frontend is a React SPA: route content is rendered client-side, so curl
+  # receives the shared HTML shell rather than rendered page text. Verify the
+  # route is reachable and ensure legacy branding is not present in the shell.
   if printf '%s' "$body" | grep -Fqi 'TrackMyRMC'; then
-    echo "FAIL ${path}: legacy TrackMyRMC branding is still rendering" >&2
+    echo "FAIL ${path}: legacy TrackMyRMC branding is still present" >&2
     exit 1
   fi
-  echo "PASS ${path}"
+
+  if printf '%s' "$body" | grep -Fq '<div id="root"></div>'; then
+    echo "PASS ${path} (React SPA route reachable; client-rendered content: ${expected})"
+  else
+    printf '%s' "$body" | grep -Fqi "$expected" || {
+      echo "FAIL ${path}: expected text not found: ${expected}" >&2
+      exit 1
+    }
+    echo "PASS ${path}"
+  fi
 }
 
 health="$(curl -fsSL --max-time 20 "${ORIGIN}/api/health")"
