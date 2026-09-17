@@ -1,0 +1,43 @@
+/* Production UI fixes: prevent label/control collisions and make every action readable on mobile. */
+.form-panel,.output-panel,.process-panel,.workflow-builder,.trigger-map,.data-panel{min-width:0;overflow:hidden}
+.form-panel label,.creator-card label,.campaign-form label{display:grid;grid-template-columns:1fr;gap:7px;width:100%;margin:0 0 16px;line-height:1.35}
+.form-panel label>input,.form-panel label>select,.form-panel label>textarea,.creator-card label>input,.creator-card label>select,.creator-card label>textarea,.campaign-form label>input,.campaign-form label>select,.campaign-form label>textarea{width:100%;min-width:0;display:block;margin:0}
+.form-panel select,.campaign-form select{appearance:auto}
+.stepbar{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:22px;padding-bottom:14px;border-bottom:1px solid var(--growth-line,#e8e3f7);color:#6f6880;font-size:13px}
+.stepbar b{color:#241c38}
+.form-panel textarea{resize:vertical;min-height:140px}
+.studio-grid{align-items:start;min-width:0}
+.output-panel pre{white-space:pre-wrap;overflow-wrap:anywhere;max-width:100%;font-family:inherit;line-height:1.7;color:#2d2640}
+.head-actions{display:flex;gap:8px;flex-wrap:wrap}
+.data-toolbar{display:flex;align-items:center;gap:9px;min-width:0}
+.data-toolbar input{min-width:0;flex:1}
+.data-toolbar span{white-space:nowrap}
+.template{width:100%;display:grid;grid-template-columns:auto 1fr auto;gap:6px 10px;text-align:left;align-items:center}
+.template b,.template span{min-width:0;overflow-wrap:anywhere}
+.template span{grid-column:2/4;color:#756d88;font-size:12px;line-height:1.45}
+.trigger-map .node{min-width:0}
+.trigger-map .node b,.trigger-map .node small{overflow-wrap:anywhere}
+.action-card{min-width:0}
+.action-card p{min-height:42px}
+.quick{min-width:0;white-space:normal;text-align:left}
+@media(max-width:780px){
+  .app-heading{width:100%}
+  .app-heading>button,.app-heading>.head-actions{width:100%}
+  .app-heading>.head-actions .outline-btn{flex:1;min-width:130px}
+  .studio-grid{grid-template-columns:1fr!important}
+  .workflow-builder,.trigger-map,.form-panel,.output-panel{padding:16px}
+  .stepbar{font-size:12px}
+  .data-toolbar{flex-wrap:wrap}
+  .data-toolbar input{flex-basis:calc(100% - 30px);order:2}
+  .data-toolbar span{margin-left:auto}
+}
+@media(max-width:520px){
+  .form-panel label{font-size:12px}
+  .form-panel input,.form-panel select,.form-panel textarea{font-size:14px}
+  .template{grid-template-columns:auto 1fr}
+  .template>svg:last-child{grid-column:2;justify-self:end;grid-row:1}
+  .template span{grid-column:1/3}
+  .stepbar{gap:6px}
+  .command-result{grid-template-columns:1fr auto}
+  .command-result span,.command-result small{grid-column:1/3}
+}
