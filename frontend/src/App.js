@@ -19,5 +19,6 @@ function Dashboard(){return <><div className="dashboard-grid"><div className="da
 function Module({title}){return <div className="module-grid"><div className="module-main"><div className="module-placeholder"><Search size={22}/><h3>{title} workspace</h3><p>This production interface is ready for the connected API actions. Start a new action to populate this workspace with live data.</p><button className="dark-btn">Create first action <ArrowUpRight size={15}/></button></div></div><aside className="module-side"><div className="side-panel"><span>QUICK ACTION</span><button><PenLine size={16}/> Generate content</button><button><Users size={16}/> Find leads</button><button><Workflow size={16}/> Build workflow</button><button><ImageIcon size={16}/> Create visual</button></div><div className="side-panel"><span>USAGE</span><strong>100</strong><small>coins remaining</small></div></aside></div>}
 function Root(){const loc=useLocation();if(loc.pathname==='/login')return <Login/>;if(loc.pathname.startsWith('/app'))return <AppShell/>;return <Public/>}
 
-export default Root;
+function App(){return <BrowserRouter><Root/></BrowserRouter>}
 
+export default App;
