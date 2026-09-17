@@ -1,0 +1,81 @@
+/* GOLD-e AI growth-first UI layer. Uses existing API-backed components; no mock data. */
+:root{--growth-purple:#6d3df5;--growth-violet:#8b5cf6;--growth-pink:#ec3fa9;--growth-blue:#3b82f6;--growth-ink:#17112f;--growth-bg:#f7f5ff;--growth-line:#e8e3f7}
+.workspace{background:linear-gradient(180deg,#fbfaff 0%,#f6f3ff 100%)}
+.workspace aside{background:rgba(255,255,255,.92);border-right:1px solid var(--growth-line);box-shadow:8px 0 30px rgba(76,48,150,.04)}
+.side-brand .brand-mark,.brand-mark{background:linear-gradient(135deg,var(--growth-purple),var(--growth-pink));box-shadow:0 8px 20px rgba(109,61,245,.22)}
+.workspace aside nav button{border-radius:12px;margin:1px 0;transition:.18s ease;color:#68627b}
+.workspace aside nav button:hover{background:#f3efff;color:var(--growth-purple);transform:translateX(2px)}
+.workspace aside nav button.active{background:linear-gradient(90deg,#eee7ff,#faf8ff);color:var(--growth-purple);box-shadow:inset 3px 0 0 var(--growth-purple);font-weight:800}
+.workspace-name{background:#faf8ff;border:1px solid var(--growth-line);border-radius:14px;margin:18px 4px 16px;padding:15px 13px}
+.workspace-name b{color:var(--growth-ink);display:block;margin-bottom:4px}
+.workspace-name small{color:#8b83a3}
+.app-top{background:rgba(255,255,255,.88);border-bottom-color:var(--growth-line);box-shadow:0 5px 25px rgba(62,38,130,.04)}
+.crumb b{color:var(--growth-purple)}
+.global-search{display:none}
+.coin{border-color:#ded5ff;background:#faf8ff;color:var(--growth-purple);border-radius:10px}
+.icon-btn{border-color:var(--growth-line);border-radius:10px}
+.app-content{max-width:1540px;padding:34px 4.2% 80px}
+.app-heading{margin-bottom:24px}
+.app-heading h1{color:var(--growth-ink);font-size:clamp(38px,4vw,56px)}
+.app-heading p{font-size:14px;color:#766f8d;line-height:1.6}
+.primary-btn{border:0;display:inline-flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,var(--growth-purple),var(--growth-pink));color:#fff;padding:11px 16px;border-radius:11px;font-weight:800;box-shadow:0 10px 25px rgba(109,61,245,.22);transition:.18s ease}
+.primary-btn:hover{transform:translateY(-1px);box-shadow:0 13px 30px rgba(109,61,245,.28)}
+.primary-btn:disabled{opacity:.55;cursor:not-allowed;transform:none}
+.dark-btn{border-radius:11px;background:linear-gradient(135deg,var(--growth-purple),var(--growth-pink));border-color:transparent;box-shadow:0 10px 25px rgba(109,61,245,.18)}
+.outline-btn{border:1px solid #d9d0f4;color:var(--growth-purple);border-radius:10px;background:#fff}
+.dashboard-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px}
+.dark-dash{background:radial-gradient(circle at 78% 22%,rgba(236,63,169,.62),transparent 26%),radial-gradient(circle at 40% 90%,rgba(59,130,246,.4),transparent 28%),linear-gradient(135deg,#20124f 0%,#352078 48%,#5e2cc8 100%);border-radius:22px;box-shadow:0 22px 55px rgba(54,26,120,.2);min-height:390px}
+.dark-dash .feature-top{color:#d9d0ff}
+.dark-dash h2{font-size:42px;max-width:600px;letter-spacing:-.045em}
+.dark-dash p{color:#e1dcf2;max-width:570px}
+.dark-dash:after{content:"AI  •  SOCIAL  •  GROWTH";position:absolute;right:26px;top:25px;color:rgba(255,255,255,.72);font-size:9px;letter-spacing:.18em;font-weight:900}
+.dash-art{width:46%;height:58%;opacity:.72;mix-blend-mode:screen}
+.metric-card{border:1px solid var(--growth-line);border-radius:18px;min-height:184px;padding:20px;background:rgba(255,255,255,.96);box-shadow:0 10px 30px rgba(62,38,130,.05);transition:.18s ease}
+.metric-card:hover{transform:translateY(-2px);box-shadow:0 16px 35px rgba(62,38,130,.09)}
+.metric-card>span{color:#81779d}
+.metric-card strong{color:var(--growth-ink);font-size:44px}
+.metric-card p{color:#837c97}
+.meter{background:#eeeafb;border-radius:99px;overflow:hidden}
+.meter i{background:linear-gradient(90deg,var(--growth-purple),var(--growth-pink))}
+.panel{background:transparent;border:0;margin-top:22px}
+.panel-head h3{color:var(--growth-ink);font-size:24px}
+.action-grid{grid-template-columns:repeat(4,1fr);gap:14px}
+.action-card{background:#fff;border:1px solid var(--growth-line);border-radius:18px;padding:20px;box-shadow:0 10px 30px rgba(62,38,130,.05);transition:.18s ease}
+.action-card:hover{transform:translateY(-3px);border-color:#cfc1ff;box-shadow:0 18px 40px rgba(109,61,245,.1)}
+.action-card svg{color:var(--growth-purple)}
+.action-card b{color:var(--growth-ink);display:block;margin-top:10px}
+.action-card p{color:#7b748e;line-height:1.55}
+.command-wrap{position:sticky;bottom:18px;margin-top:28px;background:rgba(255,255,255,.94);border:1px solid #d9cff7;border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 18px 55px rgba(65,37,142,.16);backdrop-filter:blur(16px);z-index:15}
+.command-wrap>svg{color:var(--growth-purple)}
+.command-wrap input{flex:1;border:0;outline:0;background:transparent;color:var(--growth-ink);font-size:14px}
+.command-wrap input::placeholder{color:#9b93ad}
+.command-wrap button{width:38px;height:38px;border:0;border-radius:11px;background:linear-gradient(135deg,var(--growth-purple),var(--growth-pink));color:#fff;display:grid;place-items:center}
+.command-wrap button:disabled{opacity:.4}
+.command-result{background:#fff;border:1px solid #d8cef6;border-radius:14px;margin-top:10px;padding:14px 16px;box-shadow:0 12px 30px rgba(65,37,142,.1);display:grid;grid-template-columns:auto 1fr auto;gap:7px 12px;align-items:center}
+.command-result b{color:var(--growth-purple)}
+.command-result span{color:#554e69}
+.command-result small{grid-column:2;color:#9188a4}
+.command-result button{border:0;background:transparent}
+.notice{border:1px solid #d7efdf;background:#f2fff6;color:#176b37;border-radius:12px;padding:11px 13px;display:flex;gap:8px;align-items:center;margin:0 0 16px;font-size:13px}
+.notice.error{border-color:#f3d0d0;background:#fff5f5;color:#a11f2b}
+/* Existing secondary screens */
+.form-panel,.output-panel,.process-panel,.workflow-builder,.trigger-map,.data-panel,.loading-panel,.error-panel,.module-placeholder,.side-panel{border-color:var(--growth-line);border-radius:18px;background:#fff;box-shadow:0 10px 30px rgba(62,38,130,.045)}
+.form-panel,.output-panel,.workflow-builder,.trigger-map,.data-panel{padding:22px}
+.form-panel label,.creator-card label,.campaign-form label{color:#514a63;font-weight:800}
+.form-panel input,.form-panel select,.form-panel textarea,.creator-card input,.creator-card select,.creator-card textarea,.campaign-form input,.campaign-form select,.campaign-form textarea{border:1px solid #ddd6ef;border-radius:11px;background:#fcfbff;padding:12px 13px;outline:0;color:#29233b;transition:.15s}
+.form-panel input:focus,.form-panel select:focus,.form-panel textarea:focus,.creator-card input:focus,.creator-card select:focus,.creator-card textarea:focus,.campaign-form input:focus,.campaign-form select:focus,.campaign-form textarea:focus{border-color:#9b7cff;box-shadow:0 0 0 3px rgba(109,61,245,.09)}
+.template-grid{gap:10px}
+.template{border:1px solid var(--growth-line);background:#fff;border-radius:14px;padding:15px;transition:.18s}
+.template:hover,.template.active{border-color:#b9a5ff;background:#faf8ff;box-shadow:0 8px 24px rgba(109,61,245,.08)}
+.template.active svg{color:var(--growth-purple)}
+.status-pill{background:#f0ebff;border-color:#ddd3ff;color:var(--growth-purple);border-radius:99px;padding:5px 8px;font-size:10px;font-weight:800}
+.data-toolbar{background:#faf8ff;border-color:var(--growth-line);border-radius:12px}
+.data-toolbar input{background:transparent}
+.data-row{border-bottom-color:#eee9f7;padding:15px 10px}
+.data-row:hover{background:#faf8ff}
+/* social-looking cards on existing feature tiles */
+.feature-card{border-color:var(--growth-line);border-radius:18px;box-shadow:0 10px 30px rgba(62,38,130,.045)}
+/* responsive */
+@media(max-width:1080px){.action-grid{grid-template-columns:repeat(2,1fr)}.dashboard-grid{grid-template-columns:1fr 1fr}.dark-dash{grid-column:span 2}}
+@media(max-width:780px){.app-content{padding:24px 16px 80px}.app-heading h1{font-size:40px}.dashboard-grid{grid-template-columns:1fr}.dark-dash{grid-column:auto;min-height:360px}.dash-art{width:58%}.action-grid{grid-template-columns:1fr 1fr}.command-wrap{bottom:10px}.workspace aside{box-shadow:18px 0 45px rgba(35,19,75,.16)}}
+@media(max-width:520px){.app-heading h1{font-size:34px}.app-heading p{font-size:13px}.dark-dash{padding:22px}.dark-dash h2{font-size:32px}.dark-dash:after{display:none}.dash-art{width:62%;height:45%}.action-grid{grid-template-columns:1fr}.metric-card{min-height:145px}.metric-card strong{font-size:38px}.command-wrap input{font-size:12px}.command-wrap kbd{display:none}.head-actions{width:100%;display:flex;flex-wrap:wrap}.head-actions .outline-btn{flex:1}}
