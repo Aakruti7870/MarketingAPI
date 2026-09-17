@@ -5,6 +5,7 @@ import "./dark.css";
 import "./gold-eai-system.css";
 import "./app-overrides.css";
 import "./growth-overrides.css";
+import "./growth-fix.css";
 import "./growth-behavior.js";
 import App from "./App";
 
