@@ -92,3 +92,19 @@
 @media(max-width:600px){.campaign-meta,.report-grid{grid-template-columns:1fr}.campaign-row{padding:14px}.campaign-detail-body{padding:16px}}
 
 .pricing-intro{max-width:620px;color:var(--muted);line-height:1.6;margin:16px 0 0}.price-card h3{font-family:Outfit,sans-serif;font-size:25px;margin:12px 0 0}.price-card .price-kicker{display:block;font-size:9px;font-weight:800;letter-spacing:.12em;color:#77746c}.price-card.featured{border-color:#111;box-shadow:0 18px 45px rgba(0,0,0,.08)}.price-card>small{color:var(--muted);font-size:10px}.price-coins{font-size:10px;font-weight:800;border:1px solid var(--line);padding:8px;margin:0 0 14px}.price-card ul{list-style:none;padding:0;margin:0;display:grid;gap:8px}.price-card li{display:flex;align-items:flex-start;gap:7px;font-size:11px;line-height:1.4}.price-loading{margin-top:30px;padding:30px;border:1px solid var(--line);background:#fff;color:var(--muted)}.tax-note{display:block;margin-top:18px;color:#8a877f;font-size:10px}
+
+/* Marketing-focused 3D hero marquee */
+.hero-marquee{overflow:hidden;min-height:540px;border-radius:28px;background:linear-gradient(145deg,#f7f4ff,#fff 48%,#f9efff);padding:12px;position:relative}
+.hero-marquee-frame{height:100%;min-height:516px;overflow:hidden;border-radius:20px;position:relative}
+.three-d-marquee{position:relative;width:100%;height:100%;min-height:516px;overflow:hidden;background:#f8f7ff}
+.three-d-marquee-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;width:115%;height:135%;position:absolute;top:-17%;left:-7%;transform:rotate(-8deg) scale(1.05)}
+.three-d-marquee-column{display:flex;flex-direction:column;gap:12px;will-change:transform}
+.three-d-marquee-column[data-direction="up"]{animation:hero-marquee-up 24s linear infinite}
+.three-d-marquee-column[data-direction="down"]{animation:hero-marquee-down 28s linear infinite}
+.three-d-marquee-card{aspect-ratio:4 / 5;overflow:hidden;border-radius:14px;background:#fff;box-shadow:0 14px 35px rgba(40,24,80,.12);border:1px solid rgba(124,77,255,.08)}
+.three-d-marquee-card img{display:block;width:100%;height:100%;object-fit:cover}
+.three-d-marquee-vignette{position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,rgba(248,247,255,.92),transparent 16%,transparent 84%,rgba(248,247,255,.92)),linear-gradient(180deg,rgba(248,247,255,.72),transparent 15%,transparent 85%,rgba(248,247,255,.8))}
+@keyframes hero-marquee-up{from{transform:translateY(0)}to{transform:translateY(-18%)}}
+@keyframes hero-marquee-down{from{transform:translateY(-18%)}to{transform:translateY(0)}}
+@media(max-width:900px){.hero-marquee{min-height:440px;padding:8px;border-radius:22px}.hero-marquee-frame,.three-d-marquee{min-height:424px}.three-d-marquee-grid{grid-template-columns:repeat(3,minmax(0,1fr));width:130%;left:-15%;transform:rotate(-7deg) scale(1.04)}}
+@media(prefers-reduced-motion:reduce){.three-d-marquee-column[data-direction="up"],.three-d-marquee-column[data-direction="down"]{animation:none}}
