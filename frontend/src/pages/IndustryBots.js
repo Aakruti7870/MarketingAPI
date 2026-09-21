@@ -58,7 +58,7 @@ export default function IndustryBots() {
 
   {!proActive && <section className="app-panel flex flex-col gap-4 border-amber-200 bg-amber-50/70 p-5 sm:flex-row sm:items-center sm:justify-between">
    <div><div className="flex items-center gap-2 font-heading font-extrabold text-slate-950"><Crown className="h-5 w-5 text-amber-600"/> Pro plan unlocks Agentic deployment</div><p className="mt-1 text-sm text-slate-600">Any business can create an account and purchase Pro Monthly or Pro Annual from the public pricing page.</p></div>
-   <button onClick={() => navigate("/pricing")} className="brand-gradient inline-flex shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-extrabold text-white shadow-brand">View plans <ExternalLink className="h-4 w-4"/></button>
+   <button onClick={() => navigate("/pricing")} className="post-login-action brand-gradient inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-extrabold leading-none text-white shadow-brand">View plans <ExternalLink className="h-4 w-4"/></button>
   </section>}
 
   <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -77,8 +77,8 @@ export default function IndustryBots() {
    <label className="mt-4 block text-sm font-bold text-slate-700">Operating instructions<textarea value={instructions} onChange={e => setInstructions(e.target.value)} rows={4} placeholder="Describe your rates, working hours, escalation rules, products, services or sales process..." className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3.5 py-3 text-sm outline-none focus:border-violet-400"/></label>
    <div className="mt-4 flex flex-wrap items-center gap-3"><label className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700"><input type="checkbox" checked={whatsapp} onChange={e => setWhatsapp(e.target.checked)}/> WhatsApp channel</label><span className="rounded-xl bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-500">Web channel is always enabled</span></div>
    <div className="mt-6 flex flex-wrap gap-3">
-    <button disabled={busy || !proActive || !selected} onClick={setup} className="brand-gradient inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-extrabold text-white shadow-brand disabled:cursor-not-allowed disabled:opacity-50"><Save className="h-4 w-4"/>{workspace?.agent ? "Update & deploy" : "Deploy agent"}</button>
-    {workspace?.agent && <button disabled={busy} onClick={toggle} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold text-slate-700 disabled:opacity-50"><Power className="h-4 w-4"/>{workspace.agent.enabled ? "Pause agent" : "Enable agent"}</button>}
+    <button disabled={busy || !proActive || !selected} onClick={setup} className="post-login-action brand-gradient inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-extrabold leading-none text-white shadow-brand disabled:cursor-not-allowed disabled:opacity-50"><Save className="h-4 w-4"/>{workspace?.agent ? "Update & deploy" : "Deploy agent"}</button>
+    {workspace?.agent && <button disabled={busy} onClick={toggle} className="post-login-action inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-extrabold leading-none text-slate-700 disabled:opacity-50"><Power className="h-4 w-4"/>{workspace.agent.enabled ? "Pause agent" : "Enable agent"}</button>}
    </div>
    {status && <div className="mt-4 flex items-center gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-xs font-bold text-emerald-700"><CheckCircle2 className="h-4 w-4"/>{status}</div>}
   </section>
