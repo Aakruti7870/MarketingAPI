@@ -11,7 +11,7 @@ export function Button({ variant = "primary", size = "md", className = "", child
     ghost: "text-slate-600 hover:bg-violet-50 hover:text-violet-700",
     danger: "border border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100",
   };
-  return <button className={`inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-100 ${sizes[size]} ${variants[variant] || variants.primary} ${className}`} {...props}>{children}</button>;
+  return <button className={`inline-flex min-h-10 items-center justify-center gap-2 whitespace-nowrap rounded-xl font-semibold leading-none transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus-visible:ring-4 focus-visible:ring-violet-100 ${sizes[size]} ${variants[variant] || variants.primary} ${className}`} {...props}>{children}</button>;
 }
 
 export function Card({ className = "", children, ...props }) {
