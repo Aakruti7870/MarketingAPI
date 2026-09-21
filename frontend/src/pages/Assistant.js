@@ -120,7 +120,7 @@ export default function Assistant() {
       <div className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-4 pb-5 pt-8 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-violet-500"><Sparkles className="h-4 w-4" /> GOLD-e AI Assistant</div>
-          <button onClick={newChat} className="rounded-xl border border-violet-100 bg-white/85 px-3 py-2 text-xs font-bold text-slate-600 shadow-sm transition hover:border-violet-200 hover:text-violet-700">New chat</button>
+          <button onClick={newChat} className="post-login-action inline-flex min-h-9 items-center justify-center rounded-xl border border-violet-100 bg-white/85 px-3 py-2 text-xs font-bold leading-none text-slate-600 shadow-sm transition hover:border-violet-200 hover:text-violet-700">New chat</button>
         </div>
 
         {loadingThread ? (
@@ -204,7 +204,7 @@ function MessageBubble({ message, onOpenAction, onRegenerate }) {
         <div className={`assistant-bubble px-5 py-4 text-[15px] leading-7 ${message.error ? "!border-rose-200 !bg-rose-50/80 text-rose-700" : "text-slate-800"}`}>
           <div className="whitespace-pre-wrap">{message.text}</div>
           {message.data?.length > 0 && <div className="mt-4 grid gap-2 sm:grid-cols-2">{message.data.slice(0, 6).map((item, index) => <div key={item.id || index} className="rounded-xl border border-violet-100 bg-white/75 p-3"><div className="text-sm font-extrabold text-slate-800">{item.name || item.company || `Result ${index + 1}`}</div>{item.company && item.name && <div className="mt-0.5 text-xs text-slate-500">{item.company}</div>}{item.score != null && <div className="mt-2 text-xs font-bold text-violet-600">AI score {item.score}</div>}</div>)}</div>}
-          {message.action?.startsWith("navigate:") && <button onClick={() => onOpenAction(message.action)} className="mt-4 rounded-xl border border-violet-200 bg-white px-3 py-2 text-xs font-extrabold text-violet-700 shadow-sm hover:bg-violet-50">Open recommended workspace</button>}
+          {message.action?.startsWith("navigate:") && <button onClick={() => onOpenAction(message.action)} className="post-login-action mt-4 inline-flex min-h-9 items-center justify-center rounded-xl border border-violet-200 bg-white px-3 py-2 text-xs font-extrabold leading-none text-violet-700 shadow-sm hover:bg-violet-50">Open recommended workspace</button>}
         </div>
         {!message.error && <div className="mt-2 flex items-center gap-1 text-slate-400"><TinyAction icon={Copy} label="Copy" onClick={() => { navigator.clipboard?.writeText(message.text); toast.success("Copied"); }} /><TinyAction icon={ThumbsUp} label="Helpful" /><TinyAction icon={ThumbsDown} label="Not helpful" />{message.sourcePrompt && <TinyAction icon={RefreshCw} label="Regenerate" onClick={onRegenerate} />}</div>}
       </div>
