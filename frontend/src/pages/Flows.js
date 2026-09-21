@@ -142,7 +142,7 @@ export default function Flows() {
           <h1 className="font-heading text-3xl font-extrabold tracking-[-.035em] text-slate-950 sm:text-4xl">Build one workflow. Run it across every customer channel.</h1>
           <p className="mt-3 text-sm leading-6 text-slate-500 sm:text-base">Flows are versioned, workspace-isolated and channel-neutral. Web and Support Widget can run now; the WhatsApp renderer will attach to the same published versions after WABA activation.</p>
         </div>
-        <button onClick={createBlank} disabled={!!creating} className="brand-gradient flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-extrabold text-white shadow-brand disabled:opacity-50"><Plus className="h-4 w-4" /> New Flow</button>
+        <button onClick={createBlank} disabled={!!creating} className="post-login-action brand-gradient flex items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-extrabold leading-none text-white shadow-brand disabled:opacity-50"><Plus className="h-4 w-4" /> New Flow</button>
       </header>
 
       <section className="grid gap-4 md:grid-cols-3">
@@ -163,7 +163,7 @@ export default function Flows() {
               <h3 className="mt-5 font-heading text-lg font-extrabold text-slate-900">{template.name}</h3>
               <p className="mt-2 min-h-16 text-sm leading-6 text-slate-500">{template.description}</p>
               <div className="mt-4 flex flex-wrap gap-2">{template.channels?.map((channel) => <ChannelBadge key={channel} channel={channel} />)}</div>
-              <button onClick={() => createFromTemplate(template)} disabled={creating === template.key} className="mt-5 flex items-center gap-2 text-xs font-extrabold text-violet-700 disabled:opacity-50"><CopyPlus className="h-4 w-4" /> {creating === template.key ? "Creating…" : "Use template"}</button>
+              <button onClick={() => createFromTemplate(template)} disabled={creating === template.key} className="post-login-action mt-5 inline-flex min-h-9 items-center justify-center gap-2 rounded-xl border border-violet-100 bg-white px-3 py-2 text-xs font-extrabold leading-none text-violet-700 shadow-sm transition hover:border-violet-200 hover:bg-violet-50 disabled:opacity-50"><CopyPlus className="h-4 w-4" /> {creating === template.key ? "Creating…" : "Use template"}</button>
             </article>
           ))}
         </div>
@@ -210,7 +210,7 @@ function FlowDetail({ flow, analytics, canPublish, publishing, onPublish, onPrev
     <div>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div><div className="flex flex-wrap items-center gap-2"><h2 className="font-heading text-2xl font-extrabold text-slate-950">{flow.name}</h2><StatusBadge status={flow.status} /></div><p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">{flow.description}</p><div className="mt-3 flex flex-wrap gap-2">{flow.channels?.map((channel) => <ChannelBadge key={channel} channel={channel} />)}</div></div>
-        <div className="flex gap-2"><button onClick={onPreview} className="flex items-center gap-2 rounded-xl border border-violet-100 bg-white px-3 py-2 text-xs font-extrabold text-violet-700 shadow-sm"><Play className="h-3.5 w-3.5" /> Preview</button>{canPublish && <button onClick={onPublish} disabled={publishing} className="brand-gradient flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-extrabold text-white shadow-brand disabled:opacity-50"><Rocket className="h-3.5 w-3.5" /> {publishing ? "Publishing…" : "Publish"}</button>}</div>
+        <div className="flex flex-wrap items-center gap-2"><button onClick={onPreview} className="post-login-action inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-violet-100 bg-white px-3 py-2 text-xs font-extrabold leading-none text-violet-700 shadow-sm"><Play className="h-3.5 w-3.5" /> Preview</button>{canPublish && <button onClick={onPublish} disabled={publishing} className="post-login-action brand-gradient inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-extrabold leading-none text-white shadow-brand disabled:opacity-50"><Rocket className="h-3.5 w-3.5" /> {publishing ? "Publishing…" : "Publish"}</button>}</div>
       </div>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-4">
