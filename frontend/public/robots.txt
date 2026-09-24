@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://gold-etechapp.com/sitemap.xml
+Sitemap: https://goldetech.com/sitemap.xml
