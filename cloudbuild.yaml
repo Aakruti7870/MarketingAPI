@@ -3,7 +3,7 @@ substitutions:
   _SERVICE: marketingapi
   _AR_REPO: marketingapi
   _SCHEDULER_JOB: marketingapi-scheduler
-  _PUBLIC_ORIGIN: https://gold-etechapp.com
+  _PUBLIC_ORIGIN: https://goldetech.com
 
 steps:
   - id: ensure-artifact-registry
